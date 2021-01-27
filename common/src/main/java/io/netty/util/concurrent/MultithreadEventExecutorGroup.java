@@ -65,22 +65,33 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      * @param executor          the Executor to use, or {@code null} if the default should be used.
      * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
+     *                          todo args 是 selectorProvider, selectStrategyFactory, RejectedExecutionHandlers.reject()的简写
+     *
+     * todo 这个构造方法中，完成了一些属性的赋值, 彻底构造完成 <事件循环组对象>
      */
-    protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
-                                            EventExecutorChooserFactory chooserFactory, Object... args) {
+    protected MultithreadEventExecutorGroup(int nThreads, Executor executor, EventExecutorChooserFactory chooserFactory, Object... args) {
         if (nThreads <= 0) {
             throw new IllegalArgumentException(String.format("nThreads: %d (expected: > 0)", nThreads));
         }
 
         if (executor == null) {
+            /**
+             * todo ThreadPerTaskExecutor   意味着为当前的事件循环组创建Executor , 用于针对每一个任务的 Executor 线程的执行器
+             * todo newDefaultThreadFactory 根据它的特性,可以给线程加名字等。
+             * todo 比传统的好处是 把创建线程和 定义线程需要做的任务分开, 我们只关心任务,  两者解耦
+             * todo 每次执行任务都会创建一个线程实体
+             * todo NioEventLoop 线程命名规则  nioEventLoop-1-XX    1代表是第几个group   XX第几个eventLoop
+             */
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
         children = new EventExecutor[nThreads];
 
+        // todo 循环
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                // todo 创建 EventLoop 事件循环
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
@@ -108,6 +119,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
+        // todo chooser 在这里实例化
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {

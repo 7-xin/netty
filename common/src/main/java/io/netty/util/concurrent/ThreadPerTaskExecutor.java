@@ -20,6 +20,11 @@ import io.netty.util.internal.ObjectUtil;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * todo command是用户定义的任务, 命令模式; 直观的 我定义一种任务, 程序不需要知道我执行的命令是什么,但是当我把任务扔给你, 你帮我执行就好了
+ *
+ * todo 代理设计模型, 代理了ThreadFactory  , 把本来给ThreadPerTaskExecutor执行的任务给了ThreadFactory
+ */
 public final class ThreadPerTaskExecutor implements Executor {
     private final ThreadFactory threadFactory;
 
@@ -27,6 +32,7 @@ public final class ThreadPerTaskExecutor implements Executor {
         this.threadFactory = ObjectUtil.checkNotNull(threadFactory, "threadFactory");
     }
 
+    // todo  必须实现 Executor 里面唯一的抽象方法, execute , 执行性任务
     @Override
     public void execute(Runnable command) {
         threadFactory.newThread(command).start();
