@@ -377,6 +377,13 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                /**
+                 * todo  javaChannel() -- 返回SelectableChanel 可选择的Channel,换句话说,可以和Selector搭配使用,他是channel体系的顶级抽象类, 实际的类型是 ServerSocketChannel
+                 * todo  eventLoop().unwrappedSelector(), -- >  获取选择器, 现在在AbstractNioChannel中 获取到的eventLoop是BossGroup里面的
+                 * todo  到目前看, 他是把ServerSocketChannel(系统创建的) 注册进了 EventLoop的选择器
+                 *
+                 * todo 到目前为止, 虽然注册上了,但是它不关心任何事件
+                 */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {

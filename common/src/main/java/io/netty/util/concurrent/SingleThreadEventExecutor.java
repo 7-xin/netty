@@ -820,6 +820,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+    /**
+     * todo eventLoop事件循环里面的task，会在本类SingleThreadEventExecutor里面: execute() 执行
+     * @param task
+     */
     @Override
     public void execute(Runnable task) {
         ObjectUtil.checkNotNull(task, "task");
@@ -831,10 +835,19 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         execute(ObjectUtil.checkNotNull(task, "task"), false);
     }
 
+
     private void execute(Runnable task, boolean immediate) {
+        /**
+         * todo 同样判断当前线程是不是 eventLoop里面的那条唯一的线程, 如果是的话, 就把当前任务放到任务队列里面等着当前的线程执行
+         * todo 不是的话就开启新的线程去执行这个新的任务
+         * todo eventLoop一生只会绑定一个线程，服务器启动时只有一条主线程，一直都是在做初始化的工作，并没有任何一次start()
+         * todo 所以走的是else, 在else中首先开启新的线程,而后把任务添加进去
+         */
         boolean inEventLoop = inEventLoop();
+        // todo 添加一个新任务
         addTask(task);
         if (!inEventLoop) {
+            // todo 开始线程
             startThread();
             if (isShutdown()) {
                 boolean reject = false;
@@ -982,10 +995,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     private void doStartThread() {
+        // todo 断言线程为空, 然后才创建新的线程
         assert thread == null;
         executor.execute(new Runnable() {
+            // todo 每次 Execute 都是在使用 默认的线程工厂，创建一个线程并执行 Runnable 里面的任务
             @Override
             public void run() {
+                // todo 获取刚才创建出来的线程,保存在 NioEventLoop中的 thread 变量里面, 这里其实就是在进行那个唯一的绑定
                 thread = Thread.currentThread();
                 if (interrupted) {
                     thread.interrupt();
@@ -994,6 +1010,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    // todo 实际启动线程, 到这里  NioEventLoop 就启动完成了
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {

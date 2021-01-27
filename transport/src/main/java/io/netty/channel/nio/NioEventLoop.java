@@ -462,6 +462,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * todo NioEventLoop 无限循环
+     *
+     * todo select()                检查是否有IO事件
+     * todo ProcessorSelectedKeys() 处理IO事件
+     * todo RunAllTask()            处理异步任务队列
+     */
     @Override
     protected void run() {
         int selectCnt = 0;
@@ -485,6 +492,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         nextWakeupNanos.set(curDeadlineNanos);
                         try {
                             if (!hasTasks()) {
+                                // todo 轮询IO事件, 等待事件的发生, 本方法下面的代码是处理接受到的感性趣的事件, 进入查看本方法
                                 strategy = select(curDeadlineNanos);
                             }
                         } finally {
@@ -507,24 +515,31 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 selectCnt++;
                 cancelledKeys = 0;
                 needsToSelectAgain = false;
-                final int ioRatio = this.ioRatio;
+                final int ioRatio = this.ioRatio;   // todo 默认 50
                 boolean ranTasks;
+                // todo  如果 ioRatio==100 就调用第一个 processSelectedKeys() 否则就调用第二个
                 if (ioRatio == 100) {
                     try {
                         if (strategy > 0) {
+                            // todo 处理 处理发生的感性趣的事件
                             processSelectedKeys();
                         }
                     } finally {
                         // Ensure we always run tasks.
+                        // todo 用于处理 本 eventLoop外的线程 扔到taskQueue中的任务
                         ranTasks = runAllTasks();
                     }
-                } else if (strategy > 0) {
+                } else if (strategy > 0) {  // todo 因为ioRatio默认是50 , 所以来else
+                    // todo 记录下开始的时间
                     final long ioStartTime = System.nanoTime();
                     try {
+                        // todo 处理IO事件
                         processSelectedKeys();
                     } finally {
                         // Ensure we always run tasks.
+                        // todo  根据处理IO事件耗时 ,控制 下面的runAllTasks执行任务不能超过 ioTime 时间
                         final long ioTime = System.nanoTime() - ioStartTime;
+                        // todo 这里面有聚合任务的逻辑
                         ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
                 } else {
@@ -533,8 +548,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
                 if (ranTasks || strategy > 0) {
                     if (selectCnt > MIN_PREMATURE_SELECTOR_RETURNS && logger.isDebugEnabled()) {
-                        logger.debug("Selector.select() returned prematurely {} times in a row for Selector {}.",
-                                selectCnt - 1, selector);
+                        logger.debug("Selector.select() returned prematurely {} times in a row for Selector {}.", selectCnt - 1, selector);
                     }
                     selectCnt = 0;
                 } else if (unexpectedSelectorWakeup(selectCnt)) { // Unexpected wakeup (unusual case)
@@ -543,8 +557,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             } catch (CancelledKeyException e) {
                 // Harmless exception - log anyway
                 if (logger.isDebugEnabled()) {
-                    logger.debug(CancelledKeyException.class.getSimpleName() + " raised by a Selector {} - JDK bug?",
-                            selector, e);
+                    logger.debug(CancelledKeyException.class.getSimpleName() + " raised by a Selector {} - JDK bug?", selector, e);
                 }
             } catch (Error e) {
                 throw (Error) e;
@@ -607,7 +620,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * todo 处理 selectKeys
+     */
     private void processSelectedKeys() {
+        // todo  selectedKeys 就是经过优化后的keys(底层是数组)
         if (selectedKeys != null) {
             processSelectedKeysOptimized();
         } else {
@@ -678,11 +695,20 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             final SelectionKey k = selectedKeys.keys[i];
             // null out entry in the array to allow to have it GC'ed once the Channel close
             // See https://github.com/netty/netty/issues/2363
+            /**
+             * todo 数组输出空项，从而允许在channel 关闭时对其进行垃圾回收
+             * todo 数组中当前循环对应的keys质空，这种感兴趣的事件只处理一次就行
+             */
             selectedKeys.keys[i] = null;
 
+            /**
+             * todo 获取出 attachment，默认情况下就是注册进Selector时，传入的第三个参数  this===>   NioServerSocketChannel
+             * todo 一个Selector中可能被绑定上了成千上万个 Channel，通过 K+attachment 的手段，精确的取出发生指定事件的 channel，进而获取 channel中的 unsafe 类进行下一步处理
+             */
             final Object a = k.attachment();
 
             if (a instanceof AbstractNioChannel) {
+                // todo 进入这个方法，传进入 感兴趣的 key + NioSocketChannel
                 processSelectedKey(k, (AbstractNioChannel) a);
             } else {
                 @SuppressWarnings("unchecked")
@@ -702,7 +728,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
+        // todo 这个unsafe 也是可channel 也是和 Channel 进行唯一绑定的对象
         final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();
+        // todo 确保Key的合法
         if (!k.isValid()) {
             final EventLoop eventLoop;
             try {
@@ -724,10 +752,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             return;
         }
 
+        // todo NioServerSocketChannel和selectKey都合法的话, 就进入下面的 处理阶段
         try {
+            // todo 获取SelectedKey 的 关心的选项
             int readyOps = k.readyOps();
             // We first need to call finishConnect() before try to trigger a read(...) or write(...) as otherwise
             // the NIO JDK channel implementation may throw a NotYetConnectedException.
+
+            // todo 在read() write() 之前我们需要调用 finishConnect() 方法, 否则 NIO JDK 抛出异常
             if ((readyOps & SelectionKey.OP_CONNECT) != 0) {
                 // remove OP_CONNECT as otherwise Selector.select(..) will always return without blocking
                 // See https://github.com/netty/netty/issues/924
@@ -746,6 +778,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
             // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead
             // to a spin loop
+            // todo 同样是检查 readOps是否为零, 来检查是否出现了  jdk  空轮询的bug
             if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) {
                 unsafe.read();
             }
