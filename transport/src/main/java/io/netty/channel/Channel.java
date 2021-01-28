@@ -78,11 +78,13 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
 
     /**
      * Returns the globally unique identifier of this {@link Channel}.
+     * todo 返回Channel id
      */
     ChannelId id();
 
     /**
      * Return the {@link EventLoop} this {@link Channel} was registered to.
+     * todo 返回channel所注册的 eventLoop
      */
     EventLoop eventLoop();
 
@@ -91,31 +93,37 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      *
      * @return the parent channel.
      *         {@code null} if this channel does not have a parent channel.
+     * todo 返回当前Channel的父channel
      */
     Channel parent();
 
     /**
      * Returns the configuration of this channel.
+     * todo 描述了 关于channel的 一些列配置信息
      */
     ChannelConfig config();
 
     /**
      * Returns {@code true} if the {@link Channel} is open and may get active later
+     * todo 检查 channel 是否开启
      */
     boolean isOpen();
 
     /**
      * Returns {@code true} if the {@link Channel} is registered with an {@link EventLoop}.
+     * todo 检查 channel 是否注册
      */
     boolean isRegistered();
 
     /**
      * Return {@code true} if the {@link Channel} is active and so connected.
+     * todo todo 什么是active 他说的是channel状态， 什么状态呢？ 当前channel 若和Selector正常的通信就说明 active
      */
     boolean isActive();
 
     /**
      * Return the {@link ChannelMetadata} of the {@link Channel} which describe the nature of the {@link Channel}.
+     * todo 返回channel的元数据
      */
     ChannelMetadata metadata();
 
@@ -127,6 +135,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      *
      * @return the local address of this channel.
      *         {@code null} if this channel is not bound.
+     * todo 服务器的ip地址
      */
     SocketAddress localAddress();
 
@@ -143,6 +152,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      *         use {@link DatagramPacket#recipient()} to determine
      *         the origination of the received message as this method will
      *         return {@code null}.
+     *  todo remoteAddress 客户端的ip地址
      */
     SocketAddress remoteAddress();
 
@@ -174,11 +184,13 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
 
     /**
      * Returns an <em>internal-use-only</em> object that provides unsafe operations.
+     * todo 返回一个仅供内部使用的 unsafe 对象， channel 上 IO数据的读写都是借助这个类完成的
      */
     Unsafe unsafe();
 
     /**
      * Return the assigned {@link ChannelPipeline}.
+     * todo 返回Channel的管道
      */
     ChannelPipeline pipeline();
 
@@ -187,6 +199,9 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      */
     ByteBufAllocator alloc();
 
+    /**
+     * todo 进入第一个实现 ， 读取Channel中的 IO数据
+     */
     @Override
     Channel read();
 
@@ -229,12 +244,14 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
         /**
          * Register the {@link Channel} of the {@link ChannelPromise} and notify
          * the {@link ChannelFuture} once the registration was complete.
+         * todo 把channel注册进EventLoop
          */
         void register(EventLoop eventLoop, ChannelPromise promise);
 
         /**
          * Bind the {@link SocketAddress} to the {@link Channel} of the {@link ChannelPromise} and notify
          * it once its done.
+         * todo 给channel绑定一个 address
          */
         void bind(SocketAddress localAddress, ChannelPromise promise);
 
@@ -268,17 +285,20 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
         /**
          * Deregister the {@link Channel} of the {@link ChannelPromise} from {@link EventLoop} and notify the
          * {@link ChannelPromise} once the operation was complete.
+         * todo 把channel注册进Selector
          */
         void deregister(ChannelPromise promise);
 
         /**
          * Schedules a read operation that fills the inbound buffer of the first {@link ChannelInboundHandler} in the
          * {@link ChannelPipeline}.  If there's already a pending read operation, this method does nothing.
+         * todo 从channel中读取IO数据
          */
         void beginRead();
 
         /**
          * Schedules a write operation.
+         * todo 往channe写入数据
          */
         void write(Object msg, ChannelPromise promise);
 

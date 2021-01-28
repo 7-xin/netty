@@ -75,12 +75,22 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param parent            the parent {@link Channel} by which this instance was created. May be {@code null}
      * @param ch                the underlying {@link SelectableChannel} on which it operates
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
+     * todo 无论是服务端的channel 还是客户端的channel都会使用这个方法进行初始化
+     * todo 如果是在创建NioSocketChannel  parent==NioServerSocketChannel  ch == SocketChanel
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
+        // todo  继续向上跟,创建基本的组件
         super(parent);
+        /**
+         * todo 如果是创建NioSocketChannel   这就是在保存原生的jdkchannel
+         * todo 如果是创建NioServerSocketChannel   这就是在保存ServerSocketChannel
+         */
         this.ch = ch;
+        // todo 设置上感兴趣的事件
         this.readInterestOp = readInterestOp;
         try {
+            // todo 作为服务端   ServerSocketChannel 设置为非阻塞的
+            // todo 作为客户端   SocketChannel 设置为非阻塞的
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -381,6 +391,13 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                  * todo  javaChannel() -- 返回SelectableChanel 可选择的Channel,换句话说,可以和Selector搭配使用,他是channel体系的顶级抽象类, 实际的类型是 ServerSocketChannel
                  * todo  eventLoop().unwrappedSelector(), -- >  获取选择器, 现在在AbstractNioChannel中 获取到的eventLoop是BossGroup里面的
                  * todo  到目前看, 他是把ServerSocketChannel(系统创建的) 注册进了 EventLoop的选择器
+                 *
+                 * todo 这里的 最后一个参数是  this是当前的channel , 意思是把当前的Channel当成是一个 attachment(附件) 绑定到selector上 作用???
+                 * todo  现在知道了attachment的作用了
+                 * todo 1. 当channel在这里注册进 selector中返回一个selectionKey, 这个key告诉selector 这个channel是自己的
+                 * todo 2. 当selector轮询到 有channel出现了自己的感兴趣的事件时, 需要从成百上千的channel精确的匹配出 出现Io事件的channel,
+                 * todo     于是selector就在这里提前把channel存放入 attachment中, 后来使用
+                 * todo 最后一个 this 参数, 如果是服务启动时, 他就是NioServerSocketChannel   如果是客户端他就是 NioSocketChannel
                  *
                  * todo 到目前为止, 虽然注册上了,但是它不关心任何事件
                  */
