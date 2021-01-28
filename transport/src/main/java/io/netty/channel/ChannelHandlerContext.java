@@ -85,16 +85,26 @@ import java.nio.channels.Channels;
  * {@link ChannelPipeline} to find out more about inbound and outbound operations,
  * what fundamental differences they have, how they flow in a  pipeline,  and how to handle
  * the operation in your application.
+ *
+ * todo channelHandlerContext channel处理程序上下文
+ *
+ * todo AttributeMap -- 让ChannelHandlerContext 可以存储自定义的属性
+ * todo ChannelInboundInvoker -- 让ChannelHandlerContext 可以进行 InBound事件的传播,读事件,read 或者是  注册事件 active事件
+ * todo ChannelOutboundInvoker -- 让ChannelHandlerContext 可以传播写事件
  */
 public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvoker, ChannelOutboundInvoker {
 
     /**
      * Return the {@link Channel} which is bound to the {@link ChannelHandlerContext}.
+     *
+     * todo 获取ChannelHandlerContext所对应的这个Channel对象
      */
     Channel channel();
 
     /**
      * Returns the {@link EventExecutor} which is used to execute an arbitrary task.
+     *
+     * todo 获取事件执行器
      */
     EventExecutor executor();
 

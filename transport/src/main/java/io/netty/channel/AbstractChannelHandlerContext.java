@@ -58,14 +58,18 @@ import static io.netty.channel.ChannelHandlerMask.MASK_USER_EVENT_TRIGGERED;
 import static io.netty.channel.ChannelHandlerMask.MASK_WRITE;
 import static io.netty.channel.ChannelHandlerMask.mask;
 
+/**
+ * todo 抽象的 channel 处理程序上下文
+ */
 abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, ResourceLeakHint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractChannelHandlerContext.class);
+    // todo 上一个
     volatile AbstractChannelHandlerContext next;
+    // todo 下一个
     volatile AbstractChannelHandlerContext prev;
 
-    private static final AtomicIntegerFieldUpdater<AbstractChannelHandlerContext> HANDLER_STATE_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(AbstractChannelHandlerContext.class, "handlerState");
+    private static final AtomicIntegerFieldUpdater<AbstractChannelHandlerContext> HANDLER_STATE_UPDATER = AtomicIntegerFieldUpdater.newUpdater(AbstractChannelHandlerContext.class, "handlerState");
 
     /**
      * {@link ChannelHandler#handlerAdded(ChannelHandlerContext)} is about to be called.
@@ -85,13 +89,15 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
      */
     private static final int INIT = 0;
 
+    // todo pipeline
     private final DefaultChannelPipeline pipeline;
+    // todo 名称
     private final String name;
+    // todo 优先级
     private final boolean ordered;
     private final int executionMask;
 
-    // Will be set to null if no child executor should be used, otherwise it will be set to the
-    // child executor.
+    // Will be set to null if no child executor should be used, otherwise it will be set to the child executor.
     final EventExecutor executor;
     private ChannelFuture succeededFuture;
 
@@ -873,6 +879,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return false;
     }
 
+    // todo ------ 入栈从前往后找，出栈从后往前找 ------
+
+    /**
+     * todo 寻找入栈上下文
+     */
     private AbstractChannelHandlerContext findContextInbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
@@ -882,6 +893,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
+    // todo 寻找出栈上下文
     private AbstractChannelHandlerContext findContextOutbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();

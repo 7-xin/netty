@@ -42,6 +42,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 /**
  * The default {@link ChannelPipeline} implementation.  It is usually created
  * by a {@link Channel} implementation when the {@link Channel} is created.
+ *
+ * todo 默认的 channel 上下文
  */
 public class DefaultChannelPipeline implements ChannelPipeline {
 
@@ -59,9 +61,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     };
 
     private static final AtomicReferenceFieldUpdater<DefaultChannelPipeline, MessageSizeEstimator.Handle> ESTIMATOR =
-            AtomicReferenceFieldUpdater.newUpdater(
-                    DefaultChannelPipeline.class, MessageSizeEstimator.Handle.class, "estimatorHandle");
+            AtomicReferenceFieldUpdater.newUpdater( DefaultChannelPipeline.class, MessageSizeEstimator.Handle.class, "estimatorHandle");
+    // todo 头节点
     final AbstractChannelHandlerContext head;
+    // todo 尾节点
     final AbstractChannelHandlerContext tail;
 
     private final Channel channel;

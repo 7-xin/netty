@@ -23,6 +23,10 @@ import java.util.Map;
 
 /**
  * Skeleton implementation of a {@link ChannelHandler}.
+ *
+ * todo channelHandlerAdapter   channel处理程序适配器
+ *
+ * todo 内容： channelHandler 的实现
  */
 public abstract class ChannelHandlerAdapter implements ChannelHandler {
 

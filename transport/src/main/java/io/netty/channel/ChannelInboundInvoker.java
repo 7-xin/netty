@@ -15,6 +15,9 @@
  */
 package io.netty.channel;
 
+/**
+ * todo channel 入栈调用者接口
+ */
 public interface ChannelInboundInvoker {
 
     /**

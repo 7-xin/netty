@@ -18,6 +18,8 @@ package io.netty.channel;
 /**
  * {@link ChannelHandler} which adds callbacks for state changes. This allows the user
  * to hook in to state changes easily.
+ *
+ * todo channel 入栈处理接口
  */
 public interface ChannelInboundHandler extends ChannelHandler {
 

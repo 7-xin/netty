@@ -28,21 +28,24 @@ import java.lang.annotation.Target;
 /**
  * Handles an I/O event or intercepts an I/O operation, and forwards it to its next handler in
  * its {@link ChannelPipeline}.
+ * 处理拦截 IO 事件并转发到以下 pipeline
  *
  * <h3>Sub-types</h3>
  * <p>
  * {@link ChannelHandler} itself does not provide many methods, but you usually have to implement one of its subtypes:
+ *                      本身没啥方法，但是你通常需要实现它其中一个子类
  * <ul>
- * <li>{@link ChannelInboundHandler} to handle inbound I/O events, and</li>
- * <li>{@link ChannelOutboundHandler} to handle outbound I/O operations.</li>
+ * <li>{@link ChannelInboundHandler} to handle inbound I/O events, and</li>     处理 入栈 io
+ * <li>{@link ChannelOutboundHandler} to handle outbound I/O operations.</li>   处理 出栈 io
  * </ul>
  * </p>
  * <p>
  * Alternatively, the following adapter classes are provided for your convenience:
+ * 为了方便还提供了以下适配器类
  * <ul>
- * <li>{@link ChannelInboundHandlerAdapter} to handle inbound I/O events,</li>
- * <li>{@link ChannelOutboundHandlerAdapter} to handle outbound I/O operations, and</li>
- * <li>{@link ChannelDuplexHandler} to handle both inbound and outbound events</li>
+ * <li>{@link ChannelInboundHandlerAdapter} to handle inbound I/O events,</li>              入栈 io 事件
+ * <li>{@link ChannelOutboundHandlerAdapter} to handle outbound I/O operations, and</li>    出栈 io 事件
+ * <li>{@link ChannelDuplexHandler} to handle both inbound and outbound events</li>         入栈出栈 io 事件
  * </ul>
  * </p>
  * <p>
@@ -138,6 +141,7 @@ import java.lang.annotation.Target;
  * </pre>
  * Now that the state of the handler is attached to the {@link ChannelHandlerContext}, you can add the
  * same handler instance to different pipelines:
+ * 现在，处理程序的状态已附加到 ChannelHandlerContext 上，您可以将同一处理程序实例添加到不同的管道中
  * <pre>
  * public class DataServerInitializer extends {@link ChannelInitializer}&lt;{@link Channel}&gt; {
  *
@@ -179,12 +183,15 @@ public interface ChannelHandler {
 
     /**
      * Gets called after the {@link ChannelHandler} was added to the actual context and it's ready to handle events.
+     * todo 当 handler 被添加到真实的上下文中，并且准备处理事件时被调用
+     * todo handler 被添加进去的回调
      */
     void handlerAdded(ChannelHandlerContext ctx) throws Exception;
 
     /**
      * Gets called after the {@link ChannelHandler} was removed from the actual context and it doesn't handle events
      * anymore.
+     * todo handler 被移除时得回调
      */
     void handlerRemoved(ChannelHandlerContext ctx) throws Exception;
 
