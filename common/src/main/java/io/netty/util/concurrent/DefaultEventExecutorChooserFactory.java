@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Default implementation which uses simple round-robin to choose next {@link EventExecutor}.
+ *
+ * todo 默认实现执行选择工厂
  */
 @UnstableApi
 public final class DefaultEventExecutorChooserFactory implements EventExecutorChooserFactory {
@@ -33,8 +35,10 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
     @Override
     public EventExecutorChooser newChooser(EventExecutor[] executors) {
         if (isPowerOfTwo(executors.length)) {
+            // todo 如果是2的指数倍, 返回PowerOfTwoEventExecutorChooser
             return new PowerOfTwoEventExecutorChooser(executors);
         } else {
+            // todo  否则返回同样的实例
             return new GenericEventExecutorChooser(executors);
         }
     }
@@ -53,10 +57,14 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
         @Override
         public EventExecutor next() {
+            // todo 从0开始到最后一个，再从零开始，到最后一个
             return executors[idx.getAndIncrement() & executors.length - 1];
         }
     }
 
+    /**
+     * todo 通用事件执行选择器
+     */
     private static final class GenericEventExecutorChooser implements EventExecutorChooser {
         // Use a 'long' counter to avoid non-round-robin behaviour at the 32-bit overflow boundary.
         // The 64-bit long solves this by placing the overflow so far into the future, that no system

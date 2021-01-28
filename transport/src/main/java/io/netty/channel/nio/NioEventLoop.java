@@ -727,6 +727,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * todo 服务端启动后，方法被用于处理新连接
+     * todo netty 底层对数据的读写都是由 unsafe 完成的
+     * @param k
+     * @param ch
+     */
     private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
         // todo 这个unsafe 也是可channel 也是和 Channel 进行唯一绑定的对象
         final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();

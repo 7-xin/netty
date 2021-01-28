@@ -102,7 +102,9 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      * @param socket    the {@link SocketChannel} which will be used
      */
     public NioSocketChannel(Channel parent, SocketChannel socket) {
+        // todo 向上传递
         super(parent, socket);
+        // todo 主要是设置 禁用了 NoDelay算法
         config = new NioSocketChannelConfig(this, socket.socket());
     }
 

@@ -142,12 +142,20 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         javaChannel().close();
     }
 
+    // todo doReadMessage  其实就是 doChannel
+    // todo 处理新连接, 现在是在 NioServReaderSocketChannel里面
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
+        // todo java Nio底层在这里 创建jdk底层的 原生channel
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
             if (ch != null) {
+                /**
+                 * todo  把java原生的channel, 封装成 Netty自定义的封装的channel , 这里的buf是list集合对象,由上一层传递过来的
+                 * todo  this  --  NioServerSocketChannel
+                 * todo  ch --     SocketChannel
+                 */
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;
             }
