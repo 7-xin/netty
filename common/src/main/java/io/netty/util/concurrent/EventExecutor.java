@@ -37,6 +37,7 @@ public interface EventExecutor extends EventExecutorGroup {
 
     /**
      * Calls {@link #inEventLoop(Thread)} with {@link Thread#currentThread()} as argument
+     * todo 确认当前 EventLoop 是不是当前线程
      */
     boolean inEventLoop();
 

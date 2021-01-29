@@ -209,9 +209,8 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     Channel flush();
 
     /**
-     * <em>Unsafe</em> operations that should <em>never</em> be called from user-code. These methods
-     * are only provided to implement the actual transport, and must be invoked from an I/O thread except for the
-     * following methods:
+     * <em>Unsafe</em> operations that should <em>never</em> be called from user-code.
+     * These methods are only provided to implement the actual transport, and must be invoked from an I/O thread except for the following methods:
      * <ul>
      *   <li>{@link #localAddress()}</li>
      *   <li>{@link #remoteAddress()}</li>
@@ -244,14 +243,14 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
         /**
          * Register the {@link Channel} of the {@link ChannelPromise} and notify
          * the {@link ChannelFuture} once the registration was complete.
-         * todo 把channel注册进EventLoop
+         * todo 把 channel 注册进 EventLoop
          */
         void register(EventLoop eventLoop, ChannelPromise promise);
 
         /**
          * Bind the {@link SocketAddress} to the {@link Channel} of the {@link ChannelPromise} and notify
          * it once its done.
-         * todo 给channel绑定一个 address
+         * todo 给 channel 绑定一个 address
          */
         void bind(SocketAddress localAddress, ChannelPromise promise);
 
@@ -285,20 +284,20 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
         /**
          * Deregister the {@link Channel} of the {@link ChannelPromise} from {@link EventLoop} and notify the
          * {@link ChannelPromise} once the operation was complete.
-         * todo 把channel注册进Selector
+         * todo 把 channel 注册进 Selector
          */
         void deregister(ChannelPromise promise);
 
         /**
          * Schedules a read operation that fills the inbound buffer of the first {@link ChannelInboundHandler} in the
          * {@link ChannelPipeline}.  If there's already a pending read operation, this method does nothing.
-         * todo 从channel中读取IO数据
+         * todo 从channel中读取 IO 数据
          */
         void beginRead();
 
         /**
          * Schedules a write operation.
-         * todo 往channe写入数据
+         * todo 往 channel 写入数据
          */
         void write(Object msg, ChannelPromise promise);
 

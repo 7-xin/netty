@@ -644,12 +644,17 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+    /**
+     * todo 调用添加的 handler 如果需要
+     */
     final void invokeHandlerAddedIfNeeded() {
+        // todo 断言事件循环
         assert channel.eventLoop().inEventLoop();
+        // todo 如果第一次注册
         if (firstRegistration) {
             firstRegistration = false;
-            // We are now registered to the EventLoop. It's time to call the callbacks for the ChannelHandlers,
-            // that were added before the registration was done.
+            // We are now registered to the EventLoop.
+            // It's time to call the callbacks for the ChannelHandlers, that were added before the registration was done.
             callHandlerAddedForAllHandlers();
         }
     }

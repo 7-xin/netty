@@ -65,8 +65,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     /**
      * Creates a new instance.
      *
-     * @param parent
-     *        the parent of this channel. {@code null} if there's no parent.
+     * @param parent    the parent of this channel. {@code null} if there's no parent.
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
@@ -74,7 +73,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         id = newId();
         // todo 创建一个 unsafe 对象
         unsafe = newUnsafe();
-        // todo 在这里初始化了每一个channel都会有的pipeline组件
+        // todo 在这里初始化了每一个 channel 都会有的 pipeline 组件
         pipeline = newChannelPipeline();
     }
 
@@ -492,7 +491,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             /**
              * todo 如果不是，它以一个任务的形式提交事件循环，新的任务在新的线程开始，规避了多线程的并发
-             * todo 他是SimpleThreadEventExucutor中execute()实现的,把任务添加到执行队列执行
+             * todo 他是SimpleThreadEventExecutor中execute()实现的,把任务添加到执行队列执行
              */
             } else {
                 try {
@@ -534,17 +533,17 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 neverRegistered = false;
                 registered = true;
 
-                // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
-                // user may already fire events through the pipeline in the ChannelFutureListener.
+                // Ensure we call handlerAdded(...) before we actually notify the promise.
+                // This is needed as the user may already fire events through the pipeline in the ChannelFutureListener.
                 /**
                  * todo 确保在 notify the promise前调用 handlerAdded(...)
                  * todo 这是必需的，因为用户可能已经通过ChannelFutureListener中的管道触发了事件。
                  * todo 如果需要的话，执行HandlerAdded()方法
-                 * todo 正是这个方法，回调了前面我们添加 Initializer 中添加 Accpter的重要方法
+                 * todo 正是这个方法，回调了前面我们添加 Initializer 中添加 Accepter的重要方法
                  */
                 pipeline.invokeHandlerAddedIfNeeded();
 
-                // todo  !!!!!!!  观察者模式!!!!!!  通知观察者,谁是观察者?  暂时理解ChannelHandler 是观察者
+                // todo  !!!!!!!  观察者模式!!!!!!  通知观察者,谁是观察者?  暂时理解 ChannelHandler 是观察者
                 safeSetSuccess(promise);
 
                 // todo 传播行为，传播什么行为呢?   在head---> ServerBootStraptAccptor ---> tail传播事件ChannelRegistered  , 也就是挨个调用它们的ChannelRegisted函数
