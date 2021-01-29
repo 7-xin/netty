@@ -1337,8 +1337,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
 
         @Override
-        public void bind(
-                ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise) {
+        public void bind(ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise) {
             unsafe.bind(localAddress, promise);
         }
 

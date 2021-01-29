@@ -433,6 +433,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         readPending = true;
 
         final int interestOps = selectionKey.interestOps();
+        // todo 设置的 readInterestOp = SelectionKey.OP_ACCEPT 添加为感兴趣的事件。
+        // todo 这个位置通过位运算快速判断？？？
         if ((interestOps & readInterestOp) == 0) {
             selectionKey.interestOps(interestOps | readInterestOp);
         }

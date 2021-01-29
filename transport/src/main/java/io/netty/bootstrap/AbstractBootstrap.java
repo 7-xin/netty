@@ -56,15 +56,21 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     @SuppressWarnings("unchecked")
     static final Map.Entry<AttributeKey<?>, Object>[] EMPTY_ATTRIBUTE_ARRAY = new Map.Entry[0];
 
+    // todo eventLoopGroup 对象
     volatile EventLoopGroup group;
+
     @SuppressWarnings("deprecation")
+    // todo channel工厂 用于创建channel对象
     private volatile ChannelFactory<? extends C> channelFactory;
+    // todo 本地地址
     private volatile SocketAddress localAddress;
 
-    // The order in which ChannelOptions are applied is important they may depend on each other for validation
-    // purposes.
+    // The order in which ChannelOptions are applied is important they may depend on each other for validation purposes.
+    // todo 可选项集合
     private final Map<ChannelOption<?>, Object> options = new LinkedHashMap<ChannelOption<?>, Object>();
+    // todo 属性集合
     private final Map<AttributeKey<?>, Object> attrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
+    // todo 处理器
     private volatile ChannelHandler handler;
 
     AbstractBootstrap() {
@@ -83,11 +89,12 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
-     * The {@link EventLoopGroup} which is used to handle all the events for the to-be-created
-     * {@link Channel}
+     * The {@link EventLoopGroup} which is used to handle all the events for the to-be-created {@link Channel}
+     * todo 设置 eventLoopGroup
      */
     public B group(EventLoopGroup group) {
         ObjectUtil.checkNotNull(group, "group");
+        // todo 不允许重复设置
         if (this.group != null) {
             throw new IllegalStateException("group set already");
         }
@@ -106,9 +113,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * {@link Channel} implementation has no no-args constructor.
      */
     public B channel(Class<? extends C> channelClass) {
-        return channelFactory(new ReflectiveChannelFactory<C>(
-                ObjectUtil.checkNotNull(channelClass, "channelClass")
-        ));
+        return channelFactory(new ReflectiveChannelFactory<C>( ObjectUtil.checkNotNull(channelClass, "channelClass") ));
     }
 
     /**
@@ -167,15 +172,18 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
-     * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they got
-     * created. Use a value of {@code null} to remove a previous set {@link ChannelOption}.
+     * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they got created.
+     * Use a value of {@code null} to remove a previous set {@link ChannelOption}.
      */
     public <T> B option(ChannelOption<T> option, T value) {
         ObjectUtil.checkNotNull(option, "option");
+
         synchronized (options) {
+            // todo 空 移除
             if (value == null) {
                 options.remove(option);
             } else {
+                // todo 非空 修改
                 options.put(option, value);
             }
         }
@@ -183,8 +191,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
-     * Allow to specify an initial attribute of the newly created {@link Channel}.  If the {@code value} is
-     * {@code null}, the attribute of the specified {@code key} is removed.
+     * Allow to specify an initial attribute of the newly created {@link Channel}.
+     * If the {@code value} is {@code null}, the attribute of the specified {@code key} is removed.
+     * todo 设置创建 channel 属性
+     * todo 可以理解成 {@link java.nio.channels.SelectionKey} 的 attachment 属性，并且类型为 Map 。
      */
     public <T> B attr(AttributeKey<T> key, T value) {
         ObjectUtil.checkNotNull(key, "key");
@@ -197,8 +207,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
-     * Validate all the parameters. Sub-classes may override this, but should
-     * call the super method in that case.
+     * Validate all the parameters. Sub-classes may override this, but should call the super method in that case.
+     * todo 验证配置是否正确
+     * todo {@link #bind()} 绑定本地地址时会对调用该方法进行校验
      */
     public B validate() {
         if (group == null) {
@@ -231,11 +242,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Create a new {@link Channel} and bind it.
      */
     public ChannelFuture bind() {
+        // todo 检验启动必备参数
         validate();
         SocketAddress localAddress = this.localAddress;
         if (localAddress == null) {
             throw new IllegalStateException("localAddress not set");
         }
+        // todo 绑定本地地址（包括端口）
         return doBind(localAddress);
     }
 
@@ -268,16 +281,24 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         return doBind(ObjectUtil.checkNotNull(localAddress, "localAddress"));
     }
 
+    /**
+     * todo 实际绑定
+     */
     private ChannelFuture doBind(final SocketAddress localAddress) {
+        // todo 初始化并注册一个 Channel 对象，因为注册是异步的过程，所以返回一个 ChannelFuture 对象。
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
+        // 若有异常直接返回
         if (regFuture.cause() != null) {
             return regFuture;
         }
 
+        // todo 绑定 Channel 的端口，并注册 Channel 到 SelectionKey 中。
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
+
+            // todo ！！！！！！绑定！！！！！！
             doBind0(regFuture, channel, localAddress, promise);
             return promise;
         } else {
@@ -304,14 +325,19 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
     }
 
+    // todo 初始化并注册 channel
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            // todo 创建一个新的 channel
             channel = channelFactory.newChannel();
+            // todo 初始化 channel 配置
             init(channel);
         } catch (Throwable t) {
+            // todo 已创建对象
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
+                // todo 强制关闭 channel
                 channel.unsafe().closeForcibly();
                 // as the Channel is not registered yet we need to force the usage of the GlobalEventExecutor
                 return new DefaultChannelPromise(channel, GlobalEventExecutor.INSTANCE).setFailure(t);
@@ -320,11 +346,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
+        // todo 注册 channel 到 EventLoopGroup 中
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
                 channel.close();
             } else {
+                // todo 强制关闭 channel
                 channel.unsafe().closeForcibly();
             }
         }
@@ -356,10 +384,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         channel.eventLoop().execute(new Runnable() {
             @Override
             public void run() {
+                // todo 注册 channel 成功并绑定一个端口，并添加一个 listener
                 if (regFuture.isSuccess()) {
-                    // todo channel绑定端口并且添加了一个listener
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
+                    // todo 注册失败，回调通知 promise 异常
                     promise.setFailure(regFuture.cause());
                 }
             }
@@ -368,6 +397,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
     /**
      * the {@link ChannelHandler} to use for serving the requests.
+     * todo 设置创建 channel 的处理器
      */
     public B handler(ChannelHandler handler) {
         this.handler = ObjectUtil.checkNotNull(handler, "handler");
@@ -442,23 +472,26 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
     }
 
-    static void setChannelOptions(
-            Channel channel, Map.Entry<ChannelOption<?>, Object>[] options, InternalLogger logger) {
+    /**
+     * todo 静态方法，设置传入的 Channel 的多个可选项。
+     * @param channel
+     * @param options
+     * @param logger
+     */
+    static void setChannelOptions(Channel channel, Map.Entry<ChannelOption<?>, Object>[] options, InternalLogger logger) {
         for (Map.Entry<ChannelOption<?>, Object> e: options) {
             setChannelOption(channel, e.getKey(), e.getValue(), logger);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static void setChannelOption(
-            Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
+    private static void setChannelOption(Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
         try {
             if (!channel.config().setOption((ChannelOption<Object>) option, value)) {
                 logger.warn("Unknown channel option '{}' for channel '{}'", option, channel);
             }
         } catch (Throwable t) {
-            logger.warn(
-                    "Failed to set channel option '{}' with value '{}' for channel '{}'", option, value, channel, t);
+            logger.warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option, value, channel, t);
         }
     }
 

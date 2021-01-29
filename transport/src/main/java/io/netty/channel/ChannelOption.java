@@ -24,10 +24,8 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 /**
- * A {@link ChannelOption} allows to configure a {@link ChannelConfig} in a type-safe
- * way. Which {@link ChannelOption} is supported depends on the actual implementation
- * of {@link ChannelConfig} and may depend on the nature of the transport it belongs
- * to.
+ * A {@link ChannelOption} allows to configure a {@link ChannelConfig} in a type-safe way.
+ * Which {@link ChannelOption} is supported depends on the actual implementation of {@link ChannelConfig} and may depend on the nature of the transport it belongs to.
  *
  * @param <T>   the type of the value which is valid for the {@link ChannelOption}
  */

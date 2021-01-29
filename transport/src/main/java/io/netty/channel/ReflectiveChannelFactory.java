@@ -23,9 +23,11 @@ import java.lang.reflect.Constructor;
 
 /**
  * A {@link ChannelFactory} that instantiates a new {@link Channel} by invoking its default constructor reflectively.
+ * todo 实现 channelFactory 接口
  */
 public class ReflectiveChannelFactory<T extends Channel> implements ChannelFactory<T> {
 
+    // todo channel 对应的类
     private final Constructor<? extends T> constructor;
 
     public ReflectiveChannelFactory(Class<? extends T> clazz) {
@@ -33,14 +35,14 @@ public class ReflectiveChannelFactory<T extends Channel> implements ChannelFacto
         try {
             this.constructor = clazz.getConstructor();
         } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Class " + StringUtil.simpleClassName(clazz) +
-                    " does not have a public non-arg constructor", e);
+            throw new IllegalArgumentException("Class " + StringUtil.simpleClassName(clazz) + " does not have a public non-arg constructor", e);
         }
     }
 
     @Override
     public T newChannel() {
         try {
+            // todo 反射调用默认构造方法，创建 Channel 对象
             return constructor.newInstance();
         } catch (Throwable t) {
             throw new ChannelException("Unable to create Channel from class " + constructor.getDeclaringClass(), t);
@@ -49,7 +51,6 @@ public class ReflectiveChannelFactory<T extends Channel> implements ChannelFacto
 
     @Override
     public String toString() {
-        return StringUtil.simpleClassName(ReflectiveChannelFactory.class) +
-                '(' + StringUtil.simpleClassName(constructor.getDeclaringClass()) + ".class)";
+        return StringUtil.simpleClassName(ReflectiveChannelFactory.class) + '(' + StringUtil.simpleClassName(constructor.getDeclaringClass()) + ".class)";
     }
 }

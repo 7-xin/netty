@@ -165,8 +165,7 @@ import java.util.concurrent.TimeUnit;
 public interface ChannelFuture extends Future<Void> {
 
     /**
-     * Returns a channel where the I/O operation associated with this
-     * future takes place.
+     * Returns a channel where the I/O operation associated with this future takes place.
      */
     Channel channel();
 

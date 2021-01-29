@@ -43,10 +43,11 @@ import java.util.Map;
  * A {@link io.netty.channel.socket.ServerSocketChannel} implementation which uses
  * NIO selector based implementation to accept new connections.
  */
-public class NioServerSocketChannel extends AbstractNioMessageChannel
-                             implements io.netty.channel.socket.ServerSocketChannel {
+public class NioServerSocketChannel extends AbstractNioMessageChannel implements io.netty.channel.socket.ServerSocketChannel {
 
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
+
+    // todo 默认的 SelectorProvider 实现类。
     private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
@@ -66,6 +67,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         }
     }
 
+    // todo Channel 对应的配置对象。每种 Channel 实现类，也会对应一个 ChannelConfig 实现类。
     private final ServerSocketChannelConfig config;
 
     /**
@@ -84,6 +86,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     /**
      * Create a new instance using the given {@link ServerSocketChannel}.
+     * todo 创建 NIO 的 ServerSocketChannel 对象。
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
@@ -130,6 +133,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     @SuppressJava6Requirement(reason = "Usage guarded by java version check")
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
+        // todo 版本大于7直接绑定 小于7通过 socket 绑定
         if (PlatformDependent.javaVersion() >= 7) {
             javaChannel().bind(localAddress, config.getBacklog());
         } else {

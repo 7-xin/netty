@@ -44,9 +44,13 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractChannel.class);
 
+    // todo 父 channel 对象
     private final Channel parent;
+    // todo channel id
     private final ChannelId id;
+    // todo unsafe 对象
     private final Unsafe unsafe;
+    // todo DefaultChannelPipeline 对象
     private final DefaultChannelPipeline pipeline;
     private final VoidChannelPromise unsafeVoidPromise = new VoidChannelPromise(this, false);
     private final CloseFuture closeFuture = new CloseFuture(this);
@@ -421,7 +425,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         private volatile ChannelOutboundBuffer outboundBuffer = new ChannelOutboundBuffer(AbstractChannel.this);
         private RecvByteBufAllocator.Handle recvHandle;
         private boolean inFlush0;
+
         /** true if the channel has never been registered, false otherwise */
+        // todo 是否重未注册过，用于标记首次注册
         private boolean neverRegistered = true;
 
         private void assertEventLoop() {
@@ -530,7 +536,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                  */
                 doRegister();
                 // 修改状态
+                // todo 首次注册为 false
                 neverRegistered = false;
+                // todo 标记为 已注册
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise.
@@ -544,9 +552,11 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 // todo  !!!!!!!  观察者模式!!!!!!  通知观察者,谁是观察者?  暂时理解 ChannelHandler 是观察者
+                // todo  回调通知 `promise` 执行成功
                 safeSetSuccess(promise);
 
                 // todo 传播行为，传播什么行为呢?   在head---> ServerBootStraptAccptor ---> tail传播事件ChannelRegistered  , 也就是挨个调用它们的ChannelRegisted函数
+                // todo 触发通知已注册事件
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
@@ -577,6 +587,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
         @Override
         public final void bind(final SocketAddress localAddress, final ChannelPromise promise) {
+            // todo 判断是否在 eventLoop 线程中
             assertEventLoop();
 
             if (!promise.setUncancellable() || !ensureOpen(promise)) {
@@ -590,13 +601,12 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 !PlatformDependent.isWindows() && !PlatformDependent.maybeSuperUser()) {
                 // Warn a user about the fact that a non-root user can't receive a
                 // broadcast packet on *nix if the socket is bound on non-wildcard address.
-                logger.warn(
-                        "A non-root user can't receive a broadcast packet if the socket " +
-                        "is not bound to a wildcard address; binding to a non-wildcard " +
-                        "address (" + localAddress + ") anyway as requested.");
+                logger.warn("A non-root user can't receive a broadcast packet if the socket is not bound to a wildcard address; binding to a non-wildcard address (" + localAddress + ") anyway as requested.");
             }
 
+            // todo 记录 channel 是否活跃
             boolean wasActive = isActive();
+
             // todo 由于端口的绑定未完成，所以 wasActive是 false
             try {
                 // todo 绑定端口, 进去就是NIO原生JDK绑定端口的代码
@@ -623,7 +633,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 });
             }
 
-            // todo 观察者模式, 设置改变状态, 通知观察者的方法回调
+            // todo 观察者模式, 设置改变状态, 通知观察者的方法回调，通知 promise 执行成功
             safeSetSuccess(promise);
         }
 
@@ -893,15 +903,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             });
         }
 
+        // todo 开始读取操作
         @Override
         public final void beginRead() {
+            // 断言
             assertEventLoop();
-
+            // 是否活跃
             if (!isActive()) {
                 return;
             }
 
             try {
+                // todo 开始进行读取
                 doBeginRead();
             } catch (final Exception e) {
                 invokeLater(new Runnable() {
@@ -1045,11 +1058,13 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             return unsafeVoidPromise;
         }
 
+        // todo 确保 channel 是打开的
         protected final boolean ensureOpen(ChannelPromise promise) {
             if (isOpen()) {
                 return true;
             }
 
+            // todo 若未打开，回调通知 promise 异常
             safeSetFailure(promise, newClosedChannelException(initialCloseCause, "ensureOpen(ChannelPromise)"));
             return false;
         }

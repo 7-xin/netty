@@ -21,12 +21,20 @@ import java.net.InetSocketAddress;
 
 /**
  * A TCP/IP {@link ServerChannel} which accepts incoming TCP/IP connections.
+ *
+ * todo 接受 tcp/ip 服务端 channel
  */
 public interface ServerSocketChannel extends ServerChannel {
+
+    // todo 配置
     @Override
     ServerSocketChannelConfig config();
+
+    // todo 本地地址
     @Override
     InetSocketAddress localAddress();
+
+    // todo 远程地址
     @Override
     InetSocketAddress remoteAddress();
 }

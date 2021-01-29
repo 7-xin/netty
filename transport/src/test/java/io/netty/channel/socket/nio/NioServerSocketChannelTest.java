@@ -27,8 +27,22 @@ import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.nio.channels.NetworkChannel;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 public class NioServerSocketChannelTest extends AbstractNioChannelTest<NioServerSocketChannel> {
+
+    @Test
+    public void test1 () throws IOException {
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+
+        serverSocketChannel.socket().bind(new InetSocketAddress(9999));
+
+        while(true){
+            SocketChannel socketChannel = serverSocketChannel.accept();
+            //do something with socketChannel...
+        }
+
+    }
 
     @Test
     public void testCloseOnError() throws Exception {
