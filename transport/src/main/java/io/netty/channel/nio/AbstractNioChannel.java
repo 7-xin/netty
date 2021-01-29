@@ -61,11 +61,13 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     };
 
     /**
-     * The future of the current connection attempt.  If not null, subsequent
-     * connection attempts will fail.
+     * The future of the current connection attempt.  If not null, subsequent connection attempts will fail.
+     * todo 目前正在连接远程地址的 ChannelPromise 对象。
      */
     private ChannelPromise connectPromise;
+    // todo 连接超时监听 ScheduledFuture 对象。
     private ScheduledFuture<?> connectTimeoutFuture;
+    // todo 正在连接的远程地址
     private SocketAddress requestedRemoteAddress;
 
     /**
@@ -241,48 +243,57 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         }
 
         @Override
-        public final void connect(
-                final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
+        public final void connect(final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
             if (!promise.setUncancellable() || !ensureOpen(promise)) {
                 return;
             }
 
             try {
+                // todo 目前有正在连接远程地址的 ChannelPromise ，则直接抛出异常，禁止同时发起多个连接。
                 if (connectPromise != null) {
                     // Already a connect in process.
                     throw new ConnectionPendingException();
                 }
 
+                // todo 记录 Channel 是否激活
                 boolean wasActive = isActive();
+
+                // todo 执行连接远程地址
                 if (doConnect(remoteAddress, localAddress)) {
                     fulfillConnectPromise(promise, wasActive);
                 } else {
+                    // todo 记录 connectPromise
                     connectPromise = promise;
+                    // todo 记录 requestedRemoteAddress
                     requestedRemoteAddress = remoteAddress;
 
                     // Schedule connect timeout.
+                    // todo 使用 EventLoop 发起定时任务，监听连接远程地址超时。若连接超时，则回调通知 connectPromise 超时异常。
                     int connectTimeoutMillis = config().getConnectTimeoutMillis();
                     if (connectTimeoutMillis > 0) {
                         connectTimeoutFuture = eventLoop().schedule(new Runnable() {
                             @Override
                             public void run() {
                                 ChannelPromise connectPromise = AbstractNioChannel.this.connectPromise;
-                                if (connectPromise != null && !connectPromise.isDone()
-                                        && connectPromise.tryFailure(new ConnectTimeoutException(
-                                                "connection timed out: " + remoteAddress))) {
+                                if (connectPromise != null && !connectPromise.isDone() &&
+                                        connectPromise.tryFailure(new ConnectTimeoutException("connection timed out: " + remoteAddress))) {
+
                                     close(voidPromise());
                                 }
                             }
                         }, connectTimeoutMillis, TimeUnit.MILLISECONDS);
                     }
 
+                    // todo 添加监听器，监听连接远程地址取消。
                     promise.addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             if (future.isCancelled()) {
+                                // todo 取消定时任务
                                 if (connectTimeoutFuture != null) {
                                     connectTimeoutFuture.cancel(false);
                                 }
+                                // todo 置空 connectPromise
                                 connectPromise = null;
                                 close(voidPromise());
                             }
@@ -290,11 +301,13 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                     });
                 }
             } catch (Throwable t) {
+                // todo 回调通知 promise 发生异常
                 promise.tryFailure(annotateConnectException(t, remoteAddress));
                 closeIfClosed();
             }
         }
 
+        // todo 连接完成
         private void fulfillConnectPromise(ChannelPromise promise, boolean wasActive) {
             if (promise == null) {
                 // Closed via cancellation and the promise has been notified already.
@@ -303,13 +316,15 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
             // Get the state as trySuccess() may trigger an ChannelFutureListener that will close the Channel.
             // We still need to ensure we call fireChannelActive() in this case.
+            // todo channel 是否激活
             boolean active = isActive();
 
             // trySuccess() will return false if a user cancelled the connection attempt.
+            // todo 回调 promise 是否成功
             boolean promiseSet = promise.trySuccess();
 
-            // Regardless if the connection attempt was cancelled, channelActive() event should be triggered,
-            // because what happened is what happened.
+            // Regardless if the connection attempt was cancelled, channelActive() event should be triggered, because what happened is what happened.
+            // todo 若 Channel 是新激活的，触发通知 Channel 已激活的事件。
             if (!wasActive && active) {
                 pipeline().fireChannelActive();
             }
@@ -320,6 +335,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             }
         }
 
+        // todo 连接异常
         private void fulfillConnectPromise(ChannelPromise promise, Throwable cause) {
             if (promise == null) {
                 // Closed via cancellation and the promise has been notified already.
@@ -327,29 +343,37 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             }
 
             // Use tryFailure() instead of setFailure() to avoid the race against cancel().
+            // todo 回调通知 promise 发生异常
             promise.tryFailure(cause);
+            // todo 关闭
             closeIfClosed();
         }
 
+        // todo 完成客户端连接
         @Override
         public final void finishConnect() {
-            // Note this method is invoked by the event loop only if the connection attempt was
-            // neither cancelled nor timed out.
-
+            // Note this method is invoked by the event loop only if the connection attempt was neither cancelled nor timed out.
+            // todo 判断是否在 EventLoop 的线程中。
             assert eventLoop().inEventLoop();
 
             try {
+                // todo 获得 Channel 是否激活
                 boolean wasActive = isActive();
+                // todo 执行完成连接
                 doFinishConnect();
+                // todo 通知 connectPromise 连接完成
                 fulfillConnectPromise(connectPromise, wasActive);
             } catch (Throwable t) {
+                // todo 通知 connectPromise 连接异常
                 fulfillConnectPromise(connectPromise, annotateConnectException(t, requestedRemoteAddress));
             } finally {
                 // Check for null as the connectTimeoutFuture is only created if a connectTimeoutMillis > 0 is used
                 // See https://github.com/netty/netty/issues/1770
+                // todo 取消 connectTimeoutFuture 任务
                 if (connectTimeoutFuture != null) {
                     connectTimeoutFuture.cancel(false);
                 }
+                // todo 置空 connectPromise
                 connectPromise = null;
             }
         }

@@ -37,23 +37,25 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 /**
- * A {@link Bootstrap} that makes it easy to bootstrap a {@link Channel} to use
- * for clients.
+ * A {@link Bootstrap} that makes it easy to bootstrap a {@link Channel} to use for clients.
  *
- * <p>The {@link #bind()} methods are useful in combination with connectionless transports such as datagram (UDP).
- * For regular TCP connections, please use the provided {@link #connect()} methods.</p>
+ * <p>
+ *     The {@link #bind()} methods are useful in combination with connectionless transports such as datagram (UDP).
+ *     For regular TCP connections, please use the provided {@link #connect()} methods.
+ * </p>
  */
 public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(Bootstrap.class);
-
+    // todo 默认地址解析器对象
     private static final AddressResolverGroup<?> DEFAULT_RESOLVER = DefaultAddressResolverGroup.INSTANCE;
-
+    // todo 启动类配置对象
     private final BootstrapConfig config = new BootstrapConfig(this);
 
     @SuppressWarnings("unchecked")
-    private volatile AddressResolverGroup<SocketAddress> resolver =
-            (AddressResolverGroup<SocketAddress>) DEFAULT_RESOLVER;
+    // todo 地址解析器对象
+    private volatile AddressResolverGroup<SocketAddress> resolver = (AddressResolverGroup<SocketAddress>) DEFAULT_RESOLVER;
+    // todo 连接地址
     private volatile SocketAddress remoteAddress;
 
     public Bootstrap() { }
@@ -73,6 +75,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * @see io.netty.resolver.DefaultAddressResolverGroup
      */
     @SuppressWarnings("unchecked")
+    // todo 设置 resolver 属性
     public Bootstrap resolver(AddressResolverGroup<?> resolver) {
         this.resolver = (AddressResolverGroup<SocketAddress>) (resolver == null ? DEFAULT_RESOLVER : resolver);
         return this;
@@ -107,12 +110,14 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * Connect a {@link Channel} to the remote peer.
      */
     public ChannelFuture connect() {
+        // todo 验证
         validate();
         SocketAddress remoteAddress = this.remoteAddress;
         if (remoteAddress == null) {
             throw new IllegalStateException("remoteAddress not set");
         }
 
+        // todo 解析远程地址，并连接
         return doResolveAndConnect(remoteAddress, config.localAddress());
     }
 
@@ -152,13 +157,16 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * @see #connect()
      */
     private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
+        // todo 初始化并注册一个 Channel 对象，因为注册是异步的过程，所以返回一个 ChannelFuture 对象。
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
 
         if (regFuture.isDone()) {
+            // todo 执行失败，直接返回
             if (!regFuture.isSuccess()) {
                 return regFuture;
             }
+            // todo 解析远程地址并连接
             return doResolveAndConnect0(channel, remoteAddress, localAddress, channel.newPromise());
         } else {
             // Registration future is almost always fulfilled already, but just in case it's not.
@@ -177,6 +185,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
                         // Registration was successful, so set the correct executor to use.
                         // See https://github.com/netty/netty/issues/2586
                         promise.registered();
+                        // todo 解析远程地址并连接
                         doResolveAndConnect0(channel, remoteAddress, localAddress, promise);
                     }
                 }
@@ -185,6 +194,14 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         }
     }
 
+    /**
+     * todo 解析远程地址并连接
+     * @param channel           todo channel
+     * @param remoteAddress     todo 远程地址
+     * @param localAddress      todo 本地地址
+     * @param promise           todo
+     * @return
+     */
     private ChannelFuture doResolveAndConnect0(final Channel channel, SocketAddress remoteAddress,
                                                final SocketAddress localAddress, final ChannelPromise promise) {
         try {
@@ -203,9 +220,11 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
                 return promise;
             }
 
+            // todo 解析远程地址
             final Future<SocketAddress> resolveFuture = resolver.resolve(remoteAddress);
 
             if (resolveFuture.isDone()) {
+                // todo 解析远程地址失败，关闭 Channel ，并回调通知 promise 异常
                 final Throwable resolveFailureCause = resolveFuture.cause();
 
                 if (resolveFailureCause != null) {
@@ -214,6 +233,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
                     promise.setFailure(resolveFailureCause);
                 } else {
                     // Succeeded to resolve immediately; cached? (or did a blocking lookup)
+                    // todo 成功！连接远程地址
                     doConnect(resolveFuture.getNow(), localAddress, promise);
                 }
                 return promise;
@@ -223,22 +243,25 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
             resolveFuture.addListener(new FutureListener<SocketAddress>() {
                 @Override
                 public void operationComplete(Future<SocketAddress> future) throws Exception {
+                    // todo 解析远程地址失败，关闭 Channel ，并回调通知 promise 异常
                     if (future.cause() != null) {
                         channel.close();
                         promise.setFailure(future.cause());
                     } else {
+                        // todo 解析远程地址成功，连接远程地址
                         doConnect(future.getNow(), localAddress, promise);
                     }
                 }
             });
         } catch (Throwable cause) {
+            // todo 发生异常，并回调通知 promise 异常
             promise.tryFailure(cause);
         }
         return promise;
     }
 
-    private static void doConnect(
-            final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise connectPromise) {
+    // todo 执行远程连接 逻辑
+    private static void doConnect(final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise connectPromise) {
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.

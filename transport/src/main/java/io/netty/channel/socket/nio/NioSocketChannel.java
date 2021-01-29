@@ -306,21 +306,29 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
         }
     }
 
+    // todo 执行远程连接
     @Override
     protected boolean doConnect(SocketAddress remoteAddress, SocketAddress localAddress) throws Exception {
+        // todo 绑定本地地址
         if (localAddress != null) {
             doBind0(localAddress);
         }
 
+        // todo 执行是否成功
         boolean success = false;
         try {
+            // todo 连接远程地址
             boolean connected = SocketUtils.connect(javaChannel(), remoteAddress);
+            // todo 若未连接完成，则关注连接( OP_CONNECT )事件。
             if (!connected) {
                 selectionKey().interestOps(SelectionKey.OP_CONNECT);
             }
+            // todo 标记执行是否成功
             success = true;
+            // todo 返回是否连接完成
             return connected;
         } finally {
+            // todo 执行失败，则关闭 Channel
             if (!success) {
                 doClose();
             }
