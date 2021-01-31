@@ -16,11 +16,10 @@
 package io.netty.util.concurrent;
 
 /**
- * The {@link EventExecutor} is a special {@link EventExecutorGroup} which comes
- * with some handy methods to see if a {@link Thread} is executed in a event loop.
- * Besides this, it also extends the {@link EventExecutorGroup} to allow for a generic
- * way to access methods.
+ * The {@link EventExecutor} is a special {@link EventExecutorGroup} which comes with some handy methods to see if a {@link Thread} is executed in a event loop.
+ * Besides this, it also extends the {@link EventExecutorGroup} to allow for a generic way to access methods.
  *
+ * todo 继承 EventExecutorGroup 接口，事件执行器接口。
  */
 public interface EventExecutor extends EventExecutorGroup {
 
@@ -32,6 +31,7 @@ public interface EventExecutor extends EventExecutorGroup {
 
     /**
      * Return the {@link EventExecutorGroup} which is the parent of this {@link EventExecutor},
+     * todo 所属 EventExecutorGroup
      */
     EventExecutorGroup parent();
 
@@ -42,32 +42,37 @@ public interface EventExecutor extends EventExecutorGroup {
     boolean inEventLoop();
 
     /**
-     * Return {@code true} if the given {@link Thread} is executed in the event loop,
-     * {@code false} otherwise.
+     * Return {@code true} if the given {@link Thread} is executed in the event loop, {@code false} otherwise.
      */
     boolean inEventLoop(Thread thread);
 
     /**
      * Return a new {@link Promise}.
+     * todo 创建一个 Promise 对象
      */
     <V> Promise<V> newPromise();
 
     /**
      * Create a new {@link ProgressivePromise}.
+     * todo 创建一个 ProgressivePromise 对象
      */
     <V> ProgressivePromise<V> newProgressivePromise();
 
     /**
-     * Create a new {@link Future} which is marked as succeeded already. So {@link Future#isSuccess()}
-     * will return {@code true}. All {@link FutureListener} added to it will be notified directly. Also
-     * every call of blocking methods will just return without blocking.
+     * Create a new {@link Future} which is marked as succeeded already.
+     * So {@link Future#isSuccess()} will return {@code true}.
+     * All {@link FutureListener} added to it will be notified directly.
+     * Also every call of blocking methods will just return without blocking.
+     * todo 创建成功结果的 Future 对象
      */
     <V> Future<V> newSucceededFuture(V result);
 
     /**
-     * Create a new {@link Future} which is marked as failed already. So {@link Future#isSuccess()}
-     * will return {@code false}. All {@link FutureListener} added to it will be notified directly. Also
-     * every call of blocking methods will just return without blocking.
+     * Create a new {@link Future} which is marked as failed already.
+     * So {@link Future#isSuccess()} will return {@code false}.
+     * All {@link FutureListener} added to it will be notified directly.
+     * Also every call of blocking methods will just return without blocking.
+     * todo 创建异常的 Future 对象
      */
     <V> Future<V> newFailedFuture(Throwable cause);
 }
