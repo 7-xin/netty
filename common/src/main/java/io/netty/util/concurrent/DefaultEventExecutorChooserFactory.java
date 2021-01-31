@@ -48,7 +48,9 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
     }
 
     private static final class PowerOfTwoEventExecutorChooser implements EventExecutorChooser {
+        // todo 自增序列
         private final AtomicInteger idx = new AtomicInteger();
+        // todo EventExecutor 数组
         private final EventExecutor[] executors;
 
         PowerOfTwoEventExecutorChooser(EventExecutor[] executors) {
@@ -67,9 +69,10 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
      */
     private static final class GenericEventExecutorChooser implements EventExecutorChooser {
         // Use a 'long' counter to avoid non-round-robin behaviour at the 32-bit overflow boundary.
-        // The 64-bit long solves this by placing the overflow so far into the future, that no system
-        // will encounter this in practice.
+        // The 64-bit long solves this by placing the overflow so far into the future, that no system will encounter this in practice.
+        // todo 自增序列
         private final AtomicLong idx = new AtomicLong();
+        // todo EventExecutor 数组
         private final EventExecutor[] executors;
 
         GenericEventExecutorChooser(EventExecutor[] executors) {

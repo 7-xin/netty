@@ -18,32 +18,35 @@ package io.netty.channel;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
- * Special {@link EventExecutorGroup} which allows registering {@link Channel}s that get
- * processed for later selection during the event loop.
+ * Special {@link EventExecutorGroup} which allows registering {@link Channel}s that get processed for later selection during the event loop.
  *
+ * todo 继承 EventExecutorGroup 接口，EventLoop 的分组接口。
  */
 public interface EventLoopGroup extends EventExecutorGroup {
+
+    // todo ========== 实现自 EventExecutorGroup 接口 ==========
     /**
      * Return the next {@link EventLoop} to use
      */
     @Override
     EventLoop next();
 
+    // todo #register() 注册 Channel 到 EventLoopGroup 中。实际上，EventLoopGroup 会分配一个 EventLoop 给该 Channel 注册。
     /**
-     * Register a {@link Channel} with this {@link EventLoop}. The returned {@link ChannelFuture}
-     * will get notified once the registration was complete.
+     * Register a {@link Channel} with this {@link EventLoop}.
+     * The returned {@link ChannelFuture} will get notified once the registration was complete.
      */
     ChannelFuture register(Channel channel);
 
     /**
-     * Register a {@link Channel} with this {@link EventLoop} using a {@link ChannelFuture}. The passed
-     * {@link ChannelFuture} will get notified once the registration was complete and also will get returned.
+     * Register a {@link Channel} with this {@link EventLoop} using a {@link ChannelFuture}.
+     * The passed {@link ChannelFuture} will get notified once the registration was complete and also will get returned.
      */
     ChannelFuture register(ChannelPromise promise);
 
     /**
-     * Register a {@link Channel} with this {@link EventLoop}. The passed {@link ChannelFuture}
-     * will get notified once the registration was complete and also will get returned.
+     * Register a {@link Channel} with this {@link EventLoop}.
+     * The passed {@link ChannelFuture} will get notified once the registration was complete and also will get returned.
      *
      * @deprecated Use {@link #register(ChannelPromise)} instead.
      */

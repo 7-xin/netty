@@ -31,6 +31,8 @@ import java.util.concurrent.ThreadFactory;
  * the same time.
  *
  * todo 多线程事件循环组
+ *
+ * todo 实现 EventLoopGroup 接口，继承 MultithreadEventExecutorGroup 抽象类，基于多线程的 EventLoop 的分组抽象类。
  */
 public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutorGroup implements EventLoopGroup {
 

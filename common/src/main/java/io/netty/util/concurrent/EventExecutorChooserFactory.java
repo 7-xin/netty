@@ -26,17 +26,20 @@ public interface EventExecutorChooserFactory {
 
     /**
      * Returns a new {@link EventExecutorChooser}.
+     * todo 创建一个 EventExecutorChooser 对象
      */
     EventExecutorChooser newChooser(EventExecutor[] executors);
 
     /**
      * Chooses the next {@link EventExecutor} to use.
+     * todo EventExecutor 选择器接口
      */
     @UnstableApi
     interface EventExecutorChooser {
 
         /**
          * Returns the new {@link EventExecutor} to use.
+         * todo 选择下一个 EventExecutor 对象
          */
         EventExecutor next();
     }

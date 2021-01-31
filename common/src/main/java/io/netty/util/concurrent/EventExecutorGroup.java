@@ -22,23 +22,26 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The {@link EventExecutorGroup} is responsible for providing the {@link EventExecutor}'s to use
- * via its {@link #next()} method. Besides this, it is also responsible for handling their
- * life-cycle and allows shutting them down in a global fashion.
+ * The {@link EventExecutorGroup} is responsible for providing the {@link EventExecutor}'s to use via its {@link #next()} method.
+ * Besides this, it is also responsible for handling their life-cycle and allows shutting them down in a global fashion.
  *
+ * todo 自身不执行任务，而是将任务 {@link #submit(Runnable)} 或 {@link #schedule(Runnable, long, TimeUnit)} 给自己管理得EventExecutor 的分组。
+ * todo 至于提交给哪一个 EventExecutor ，一般是通过 #next() 方法，选择一个 EventExecutor
  */
 public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<EventExecutor> {
 
     /**
      * Returns {@code true} if and only if all {@link EventExecutor}s managed by this {@link EventExecutorGroup}
      * are being {@linkplain #shutdownGracefully() shut down gracefully} or was {@linkplain #isShutdown() shut down}.
+     *
      */
     boolean isShuttingDown();
 
     /**
      * Shortcut method for {@link #shutdownGracefully(long, long, TimeUnit)} with sensible default values.
-     *
      * @return the {@link #terminationFuture()}
+     *
+     * todo 优雅关闭
      */
     Future<?> shutdownGracefully();
 
@@ -80,12 +83,15 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
 
     /**
      * Returns one of the {@link EventExecutor}s managed by this {@link EventExecutorGroup}.
+     * todo 选择一个 EventExecutor 对象
      */
     EventExecutor next();
 
+    // todo ------------ 实现自 Iterable 接口 ------------
     @Override
     Iterator<EventExecutor> iterator();
 
+    // todo ------------ 实现自 ExecutorService 接口 ------------
     @Override
     Future<?> submit(Runnable task);
 
@@ -95,6 +101,7 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
     @Override
     <T> Future<T> submit(Callable<T> task);
 
+    // todo ------------ 实现自 ScheduledExecutorService 接口 ------------
     @Override
     ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit);
 

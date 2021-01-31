@@ -28,8 +28,14 @@ import static io.netty.util.concurrent.AbstractEventExecutor.*;
 
 /**
  * Abstract base class for {@link EventExecutorGroup} implementations.
+ *
+ * todo 抽象类 对 {@link EventExecutorGroup} 的实现
  */
 public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
+
+    /**
+     * todo #submit() 提交一个普通任务倒 EventGroup 中，todo 提交的任务通过 #next() 方法选择。
+     */
     @Override
     public Future<?> submit(Runnable task) {
         return next().submit(task);
@@ -45,6 +51,9 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().submit(task);
     }
 
+    /**
+     * todo #schedule(...) 方法，提交一个定时任务到 EventExecutor 中。
+     */
     @Override
     public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
         return next().schedule(command, delay, unit);
@@ -87,29 +96,29 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return Collections.emptyList();
     }
 
+    // todo #invokeAll(...) 方法，在 EventExecutor 中执行多个普通任务。
     @Override
-    public <T> List<java.util.concurrent.Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
-            throws InterruptedException {
+    public <T> List<java.util.concurrent.Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
         return next().invokeAll(tasks);
     }
 
     @Override
-    public <T> List<java.util.concurrent.Future<T>> invokeAll(
-            Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    public <T> List<java.util.concurrent.Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
         return next().invokeAll(tasks, timeout, unit);
     }
 
+    // todo #invokeAll(...) 方法，在 EventExecutor 中执行多个普通任务，有一个执行完成即可。
     @Override
     public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
         return next().invokeAny(tasks);
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         return next().invokeAny(tasks, timeout, unit);
     }
 
+    // todo #execute(...) 方法，在 EventExecutor 中执行一个普通任务。
     @Override
     public void execute(Runnable command) {
         next().execute(command);

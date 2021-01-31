@@ -35,12 +35,13 @@ import java.util.concurrent.ThreadFactory;
  * {@link MultithreadEventLoopGroup} implementations which is used for NIO {@link Selector} based {@link Channel}s.
  *
  * todo NIO 事件循环组
+ *
+ * todo 继承 MultithreadEventLoopGroup 抽象类，NioEventLoop 的分组实现类。
  */
 public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     /**
-     * Create a new instance using the default number of threads, the default {@link ThreadFactory} and
-     * the {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
+     * Create a new instance using the default number of threads, the default {@link ThreadFactory} and the {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
      */
     public NioEventLoopGroup() {
         this(0);
@@ -97,14 +98,16 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      * @param selectStrategyFactory     选择策略工厂  默认的选择器工厂
      */
     public NioEventLoopGroup(int nThreads, Executor executor, final SelectorProvider selectorProvider, final SelectStrategyFactory selectStrategyFactory) {
+        // todo selectorProvider            java.nio.channels.spi.SelectorProvider ，用于创建 Java NIO Selector 对象。
+        // todo selectStrategyFactory       io.netty.channel.SelectStrategyFactory ，选择策略工厂。
+        // todo rejectedExecutionHandler    io.netty.channel.SelectStrategyFactory ，拒绝执行处理器。
         super(nThreads, executor, selectorProvider, selectStrategyFactory, RejectedExecutionHandlers.reject());
     }
 
     public NioEventLoopGroup(int nThreads, Executor executor, EventExecutorChooserFactory chooserFactory,
                              final SelectorProvider selectorProvider,
                              final SelectStrategyFactory selectStrategyFactory) {
-        super(nThreads, executor, chooserFactory, selectorProvider, selectStrategyFactory,
-                RejectedExecutionHandlers.reject());
+        super(nThreads, executor, chooserFactory, selectorProvider, selectStrategyFactory, RejectedExecutionHandlers.reject());
     }
 
     public NioEventLoopGroup(int nThreads, Executor executor, EventExecutorChooserFactory chooserFactory,
@@ -119,13 +122,13 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
                              final SelectStrategyFactory selectStrategyFactory,
                              final RejectedExecutionHandler rejectedExecutionHandler,
                              final EventLoopTaskQueueFactory taskQueueFactory) {
-        super(nThreads, executor, chooserFactory, selectorProvider, selectStrategyFactory,
-                rejectedExecutionHandler, taskQueueFactory);
+        super(nThreads, executor, chooserFactory, selectorProvider, selectStrategyFactory, rejectedExecutionHandler, taskQueueFactory);
     }
 
     /**
-     * Sets the percentage of the desired amount of time spent for I/O in the child event loops.  The default value is
-     * {@code 50}, which means the event loop will try to spend the same amount of time for I/O as for non-I/O tasks.
+     * Sets the percentage of the desired amount of time spent for I/O in the child event loops.
+     * The default value is {@code 50}, which means the event loop will try to spend the same amount of time for I/O as for non-I/O tasks.
+     * todo 设置所有 EventLoop 的 IO 任务占用执行时间的比例。
      */
     public void setIoRatio(int ioRatio) {
         for (EventExecutor e: this) {
@@ -134,8 +137,8 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     /**
-     * Replaces the current {@link Selector}s of the child event loops with newly created {@link Selector}s to work
-     * around the  infamous epoll 100% CPU bug.
+     * Replaces the current {@link Selector}s of the child event loops with newly created {@link Selector}s to work around the infamous epoll 100% CPU bug.
+     * todo 重建所有 EventLoop 的 Selector 对象。
      */
     public void rebuildSelectors() {
         for (EventExecutor e: this) {

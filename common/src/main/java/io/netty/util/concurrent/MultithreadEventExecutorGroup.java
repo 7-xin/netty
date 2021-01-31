@@ -25,15 +25,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Abstract base class for {@link EventExecutorGroup} implementations that handles their tasks with multiple threads at
- * the same time.
+ * Abstract base class for {@link EventExecutorGroup} implementations that handles their tasks with multiple threads at the same time.
+ * todo 继承 AbstractEventExecutorGroup 抽象类，基于多线程的 EventExecutor ( 事件执行器 )的分组抽象类。
  */
 public abstract class MultithreadEventExecutorGroup extends AbstractEventExecutorGroup {
 
+    // todo EventExecutor 数组
     private final EventExecutor[] children;
+
+    // todo 不可变 (只读) 的 EventExecutor 数组.
     private final Set<EventExecutor> readonlyChildren;
+
+    // todo 已终止的 EventExecutor 数量
     private final AtomicInteger terminatedChildren = new AtomicInteger();
+
+    // todo 用于终止 EventExecutor 的异步 Future
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
+
+    // todo EventExecutor 选择器
     private final EventExecutorChooserFactory.EventExecutorChooser chooser;
 
     /**
@@ -85,24 +94,29 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
+        // todo 创建 EventExecutor 数组
         children = new EventExecutor[nThreads];
 
         // todo 循环
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
-                // todo 创建 EventLoop 事件循环
+                // todo 创建 EventLoop 事件循环   创建 EventExecutor 对象
                 children[i] = newChild(executor, args);
+                // todo 标记创建成功
                 success = true;
             } catch (Exception e) {
                 // TODO: Think about if this is a good exception type
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
+                // todo 创建失败,关闭所有一创建的 EventExecutor
                 if (!success) {
                     for (int j = 0; j < i; j ++) {
+                        // todo 迭代,关闭所有已创建的 EventExecutor
                         children[j].shutdownGracefully();
                     }
 
+                    // todo 确保所有已创建的 EventExecutor 已关闭
                     for (int j = 0; j < i; j ++) {
                         EventExecutor e = children[j];
                         try {
@@ -119,9 +133,10 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
-        // todo chooser 在这里实例化
+        // todo chooser 在这里实例化   创建 EventExecutor 选择器
         chooser = chooserFactory.newChooser(children);
 
+        // todo 创建监听器，用于 EventExecutor 终止时的监听
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
@@ -131,16 +146,19 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         };
 
+        // todo 设置监听器到每个 EventExecutor 上
         for (EventExecutor e: children) {
             e.terminationFuture().addListener(terminationListener);
         }
 
+        // todo 创建不可变 (只读) 的 EventExecutor 数组
         Set<EventExecutor> childrenSet = new LinkedHashSet<EventExecutor>(children.length);
         Collections.addAll(childrenSet, children);
         readonlyChildren = Collections.unmodifiableSet(childrenSet);
     }
 
     protected ThreadFactory newDefaultThreadFactory() {
+        // todo 创建的对象为 DefaultThreadFactory ，并且使用类名作为 poolType 。
         return new DefaultThreadFactory(getClass());
     }
 
