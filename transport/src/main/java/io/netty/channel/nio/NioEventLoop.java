@@ -50,21 +50,25 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * {@link SingleThreadEventLoop} implementation which register the {@link Channel}'s to a
- * {@link Selector} and so does the multi-plexing of these in the event loop.
- *
- *  todo nio 事件循环
+ * {@link SingleThreadEventLoop} implementation which register the {@link Channel}'s to a {@link Selector} and so does the multi-plexing of these in the event loop.
+ * <p>
+ * todo nio 事件循环
+ * todo 继承 SingleThreadEventLoop 抽象类，NIO EventLoop 实现类，实现对注册到其中的 Channel 的就绪的 IO 事件，和对用户提交的任务进行处理。
  */
 public final class NioEventLoop extends SingleThreadEventLoop {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioEventLoop.class);
 
+    // todo NioEventLoop cancel
     private static final int CLEANUP_INTERVAL = 256; // XXX Hard-coded value, but won't need customization.
 
+    // todo 是否禁用 SelectionKey 的优化，默认开启
     private static final boolean DISABLE_KEY_SET_OPTIMIZATION = SystemPropertyUtil.getBoolean("io.netty.noKeySetOptimization", false);
 
+    // todo 少于该 N 值，不开启空轮询重建新的 Selector 对象的功能
     private static final int MIN_PREMATURE_SELECTOR_RETURNS = 3;
-    private static final int SELECTOR_AUTO_REBUILD_THRESHOLD;
+    // todo NIO Selector 空轮询该 N 次后，重建新的 Selector 对象
+    private static final int SELECTOR_AUTO_REBUILD_THRESHOLD;   // 默认 512
 
     private final IntSupplier selectNowSupplier = new IntSupplier() {
         @Override
@@ -79,6 +83,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     // - https://bugs.java.com/view_bug.do?bug_id=6427854
     // - https://github.com/netty/netty/issues/203
     static {
+        // todo 解决 Selector #open() 方法
         final String key = "sun.nio.ch.bugLevel";
         final String bugLevel = SystemPropertyUtil.get(key);
         if (bugLevel == null) {
@@ -95,6 +100,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         }
 
+        // todo 初始化
         int selectorAutoRebuildThreshold = SystemPropertyUtil.getInt("io.netty.selectorAutoRebuildThreshold", 512);
         if (selectorAutoRebuildThreshold < MIN_PREMATURE_SELECTOR_RETURNS) {
             selectorAutoRebuildThreshold = 0;
@@ -111,10 +117,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     /**
      * The NIO {@link Selector}.
      */
+    // todo 包装的 Selector 对象，经过优化。
     private Selector selector;
+    // todo 未包装的 Selector 对象。
     private Selector unwrappedSelector;
+    // todo 注册的 SelectionKey 集合。Netty 自己实现，经过优化。
     private SelectedSelectionKeySet selectedKeys;
 
+    // todo SelectorProvider 对象，用于创建 Selector 对象
     private final SelectorProvider provider;
 
     private static final long AWAKE = -1L;
@@ -124,22 +134,28 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     //    AWAKE            when EL is awake
     //    NONE             when EL is waiting with no wakeup scheduled
     //    other value T    when EL is waiting with wakeup scheduled at time T
+    // todo 唤醒标记。因为唤醒方法 {@link Selector#wakeup()} 开销比较大，通过该标识，减少调用。
     private final AtomicLong nextWakeupNanos = new AtomicLong(AWAKE);
 
+    // todo select 策略
     private final SelectStrategy selectStrategy;
 
+    // todo 处理 Channel 的就绪的 IO 事件，占处理任务的总时间的比例
     private volatile int ioRatio = 50;
+    // todo 取消 SelectionKey 的数量
     private int cancelledKeys;
+    // todo 是否需要再次 select Selector 对象
     private boolean needsToSelectAgain;
 
     /**
      * todo 构造方法
-     * @param parent                    todo 事件循环组
-     * @param executor                  todo 执行器
-     * @param selectorProvider          todo 选择器提供者
-     * @param strategy                  todo 选择器策略
-     * @param rejectedExecutionHandler  todo 拒绝策略
-     * @param queueFactory              todo 事件循环任务队列工厂
+     *
+     * @param parent                   todo 事件循环组
+     * @param executor                 todo 执行器
+     * @param selectorProvider         todo 选择器提供者
+     * @param strategy                 todo 选择器策略
+     * @param rejectedExecutionHandler todo 拒绝策略
+     * @param queueFactory             todo 事件循环任务队列工厂
      */
     NioEventLoop(NioEventLoopGroup parent, Executor executor, SelectorProvider selectorProvider, SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler, EventLoopTaskQueueFactory queueFactory) {
         // todo 进入到父类,  着重看他是如何创建出 TaskQueue（任务队列）的
@@ -180,7 +196,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     /**
      * todo 获取一个新的选择器
-     *
+     * <p>
      * todo 这里进行了优化, netty把hashSet转换成了数组,
      * todo 因为在JDK的NIO模型中,获取Selector时, Selector里面内置的存放SelectionKey的容器是 set 集合
      * todo 而netty把它替换成了自己的数据结构, 数组, 从而使在任何情况下, 它的时间复杂度都是 O(1)
@@ -205,10 +221,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             public Object run() {
                 try {
                     // todo 通过反射  sun.nio.ch.SelectorImpl 或者这个类
-                    return Class.forName(
-                            "sun.nio.ch.SelectorImpl",
-                            false,
-                            PlatformDependent.getSystemClassLoader());
+                    return Class.forName("sun.nio.ch.SelectorImpl", false, PlatformDependent.getSystemClassLoader());
                 } catch (Throwable cause) {
                     return cause;
                 }
@@ -217,8 +230,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
         // todo 判断是否获取到了这个类
         if (!(maybeSelectorImplClass instanceof Class) ||
-            // ensure the current selector implementation is what we can instrument.
-            !((Class<?>) maybeSelectorImplClass).isAssignableFrom(unwrappedSelector.getClass())) {
+                // ensure the current selector implementation is what we can instrument.
+                !((Class<?>) maybeSelectorImplClass).isAssignableFrom(unwrappedSelector.getClass())) {
             if (maybeSelectorImplClass instanceof Throwable) {
                 Throwable t = (Throwable) maybeSelectorImplClass;
                 logger.trace("failed to instrument a special java.util.Set into: {}", unwrappedSelector, t);
@@ -301,6 +314,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         return provider;
     }
 
+    /**
+     * todo 创建任务队列
+     */
     @Override
     protected Queue<Runnable> newTaskQueue(int maxPendingTasks) {
         return newTaskQueue0(maxPendingTasks);
@@ -308,6 +324,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     private static Queue<Runnable> newTaskQueue0(int maxPendingTasks) {
         // This event loop never calls takeTask()
+        /**
+         * todo 创建 mpsc 队列
+         * todo mpsc multiple producers and a single consumer 的缩写。
+         * todo 对多线程生产任务，单线程消费任务的消费，恰好符合 NioEventLoop 的情况。
+         */
         return maxPendingTasks == Integer.MAX_VALUE ? PlatformDependent.<Runnable>newMpscQueue() : PlatformDependent.<Runnable>newMpscQueue(maxPendingTasks);
     }
 
@@ -367,9 +388,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     /**
      * Sets the percentage of the desired amount of time spent for I/O in the event loop. Value range from 1-100.
-     * The default value is {@code 50}, which means the event loop will try to spend the same amount of time for I/O
-     * as for non-I/O tasks. The lower the number the more time can be spent on non-I/O tasks. If value set to
-     * {@code 100}, this feature will be disabled and event loop will not attempt to balance I/O and non-I/O tasks.
+     * The default value is {@code 50}, which means the event loop will try to spend the same amount of time for I/O as for non-I/O tasks.
+     * The lower the number the more time can be spent on non-I/O tasks. If value set to {@code 100}, this feature will be disabled and event loop will not attempt to balance I/O and non-I/O tasks.
+     * todo 设置 ioRatio 属性
      */
     public void setIoRatio(int ioRatio) {
         if (ioRatio <= 0 || ioRatio > 100) {
@@ -417,7 +438,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
         // Register all channels to the new Selector.
         int nChannels = 0;
-        for (SelectionKey key: oldSelector.keys()) {
+        for (SelectionKey key : oldSelector.keys()) {
             Object a = key.attachment();
             try {
                 if (!key.isValid() || key.channel().keyFor(newSelectorTuple.unwrappedSelector) != null) {
@@ -431,7 +452,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     // Update SelectionKey
                     ((AbstractNioChannel) a).selectionKey = newKey;
                 }
-                nChannels ++;
+                nChannels++;
             } catch (Exception e) {
                 logger.warn("Failed to re-register a Channel to the new Selector.", e);
                 if (a instanceof AbstractNioChannel) {
@@ -464,7 +485,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     /**
      * todo NioEventLoop 无限循环
-     *
+     * <p>
      * todo select()                检查是否有IO事件
      * todo ProcessorSelectedKeys() 处理IO事件
      * todo RunAllTask()            处理异步任务队列
@@ -472,36 +493,37 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     @Override
     protected void run() {
         int selectCnt = 0;
-        for (;;) {
+        for (; ; ) {
             try {
                 int strategy;
                 try {
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
-                    case SelectStrategy.CONTINUE:
-                        continue;
+                        // todo 默认实现，不存在这种情况
+                        case SelectStrategy.CONTINUE:
+                            continue;
 
-                    case SelectStrategy.BUSY_WAIT:
-                        // fall-through to SELECT since the busy-wait is not supported with NIO
+                        case SelectStrategy.BUSY_WAIT:
+                            // fall-through to SELECT since the busy-wait is not supported with NIO
 
-                    case SelectStrategy.SELECT:
-                        long curDeadlineNanos = nextScheduledTaskDeadlineNanos();
-                        if (curDeadlineNanos == -1L) {
-                            curDeadlineNanos = NONE; // nothing on the calendar
-                        }
-                        nextWakeupNanos.set(curDeadlineNanos);
-                        try {
-                            if (!hasTasks()) {
-                                // todo 轮询IO事件, 等待事件的发生, 本方法下面的代码是处理接受到的感性趣的事件, 进入查看本方法
-                                strategy = select(curDeadlineNanos);
+                        case SelectStrategy.SELECT:
+                            long curDeadlineNanos = nextScheduledTaskDeadlineNanos();
+                            if (curDeadlineNanos == -1L) {
+                                curDeadlineNanos = NONE; // nothing on the calendar
                             }
-                        } finally {
-                            // This update is just to help block unnecessary selector wakeups
-                            // so use of lazySet is ok (no race condition)
-                            nextWakeupNanos.lazySet(AWAKE);
-                        }
-                        // fall through
-                    default:
+                            nextWakeupNanos.set(curDeadlineNanos);
+                            try {
+                                if (!hasTasks()) {
+                                    // todo 轮询IO事件, 等待事件的发生, 本方法下面的代码是处理接受到的感性趣的事件, 进入查看本方法
+                                    strategy = select(curDeadlineNanos);
+                                }
+                            } finally {
+                                // This update is just to help block unnecessary selector wakeups
+                                // so use of lazySet is ok (no race condition)
+                                nextWakeupNanos.lazySet(AWAKE);
+                            }
+                            // fall through
+                        default:
                     }
                 } catch (IOException e) {
                     // If we receive an IOException here its because the Selector is messed up. Let's rebuild
@@ -643,7 +665,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     void cancel(SelectionKey key) {
         key.cancel();
-        cancelledKeys ++;
+        cancelledKeys++;
         if (cancelledKeys >= CLEANUP_INTERVAL) {
             cancelledKeys = 0;
             needsToSelectAgain = true;
@@ -659,7 +681,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
 
         Iterator<SelectionKey> i = selectedKeys.iterator();
-        for (;;) {
+        for (; ; ) {
             final SelectionKey k = i.next();
             final Object a = k.attachment();
             i.remove();
@@ -730,6 +752,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     /**
      * todo 服务端启动后，方法被用于处理新连接
      * todo netty 底层对数据的读写都是由 unsafe 完成的
+     *
      * @param k
      * @param ch
      */
@@ -804,17 +827,17 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             state = 2;
         } finally {
             switch (state) {
-            case 0:
-                k.cancel();
-                invokeChannelUnregistered(task, k, null);
-                break;
-            case 1:
-                if (!k.isValid()) { // Cancelled by channelReady()
+                case 0:
+                    k.cancel();
                     invokeChannelUnregistered(task, k, null);
-                }
-                break;
-            default:
-                 break;
+                    break;
+                case 1:
+                    if (!k.isValid()) { // Cancelled by channelReady()
+                        invokeChannelUnregistered(task, k, null);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -823,7 +846,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         selectAgain();
         Set<SelectionKey> keys = selector.keys();
         Collection<AbstractNioChannel> channels = new ArrayList<AbstractNioChannel>(keys.size());
-        for (SelectionKey k: keys) {
+        for (SelectionKey k : keys) {
             Object a = k.attachment();
             if (a instanceof AbstractNioChannel) {
                 channels.add((AbstractNioChannel) a);
@@ -835,7 +858,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         }
 
-        for (AbstractNioChannel ch: channels) {
+        for (AbstractNioChannel ch : channels) {
             ch.unsafe().close(ch.unsafe().voidPromise());
         }
     }
@@ -871,6 +894,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         return unwrappedSelector;
     }
 
+    // todo 立即( 无阻塞 )返回 Channel 新增的感兴趣的就绪 IO 事件数量。
     int selectNow() throws IOException {
         return selector.selectNow();
     }
