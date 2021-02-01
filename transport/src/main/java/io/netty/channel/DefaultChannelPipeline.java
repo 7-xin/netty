@@ -49,9 +49,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultChannelPipeline.class);
 
+    // todo head 名
     private static final String HEAD_NAME = generateName0(HeadContext.class);
+    // todo tail 名
     private static final String TAIL_NAME = generateName0(TailContext.class);
 
+    // todo 名字 {@link AbstractChannelHandlerContext #name()} 缓存 ，基于 ThreadLocal ，用于生成在线程中唯一的名字。
     private static final FastThreadLocal<Map<Class<?>, String>> nameCaches =
             new FastThreadLocal<Map<Class<?>, String>>() {
         @Override
@@ -60,46 +63,70 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     };
 
+    // todo {@link #estimatorHandle} 的原子更新器
     private static final AtomicReferenceFieldUpdater<DefaultChannelPipeline, MessageSizeEstimator.Handle> ESTIMATOR =
             AtomicReferenceFieldUpdater.newUpdater( DefaultChannelPipeline.class, MessageSizeEstimator.Handle.class, "estimatorHandle");
+
     // todo 头节点
     final AbstractChannelHandlerContext head;
     // todo 尾节点
     final AbstractChannelHandlerContext tail;
 
+    // todo 所属 channel 对象
     private final Channel channel;
+    // todo 成功的 promise 对象
     private final ChannelFuture succeededFuture;
+    /**
+     * todo 不进行通知的 Promise 对象
+     *
+     * todo 用于一些方法执行，需要传入 Promise 类型的方法参数，但是不需要进行通知，就传入该值
+     * @see io.netty.channel.AbstractChannel.AbstractUnsafe#safeSetSuccess(ChannelPromise)
+     */
     private final VoidChannelPromise voidPromise;
+    // todo DefaultChannelPipeline 字段用途
     private final boolean touch = ResourceLeakDetector.isEnabled();
 
+    /**
+     * todo 子执行器集合
+     *
+     * todo 默认情况下，ChannelHandler 使用 Channel 所在的 EventLoop 作为执行器。
+     * todo 但是如果有需要，也可以自定义执行器。详细解析，见 {@link #childExecutor(EventExecutorGroup)} 。
+     * todo 实际情况下，基本不会用到。
+     */
     private Map<EventExecutorGroup, EventExecutor> childExecutors;
+    // todo 字段用途
     private volatile MessageSizeEstimator.Handle estimatorHandle;
+    // todo 是否是首次注册
     private boolean firstRegistration = true;
 
     /**
-     * This is the head of a linked list that is processed by {@link #callHandlerAddedForAllHandlers()} and so process
-     * all the pending {@link #callHandlerAdded0(AbstractChannelHandlerContext)}.
+     * This is the head of a linked list that is processed by {@link #callHandlerAddedForAllHandlers()} and so process all the pending {@link #callHandlerAdded0(AbstractChannelHandlerContext)}.
      *
      * We only keep the head because it is expected that the list is used infrequently and its size is small.
-     * Thus full iterations to do insertions is assumed to be a good compromised to saving memory and tail management
-     * complexity.
+     * Thus full iterations to do insertions is assumed to be a good compromised to saving memory and tail management complexity.
+     * todo 准备添加 ChannelHandler 的回调
      */
     private PendingHandlerCallback pendingHandlerCallbackHead;
 
     /**
-     * Set to {@code true} once the {@link AbstractChannel} is registered.Once set to {@code true} the value will never
-     * change.
+     * Set to {@code true} once the {@link AbstractChannel} is registered.Once set to {@code true} the value will never change.
+     * todo 是否已经注册
      */
     private boolean registered;
 
     protected DefaultChannelPipeline(Channel channel) {
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
+        // todo succeededFuture 的创建
         succeededFuture = new SucceededChannelFuture(channel, null);
+        // todo voidPromise 的创建
         voidPromise =  new VoidChannelPromise(channel, true);
 
+        // todo 创建 tail 及节点
         tail = new TailContext(this);
+        // todo 创建 head 及节点
         head = new HeadContext(this);
 
+        // todo 相互指向
         head.next = tail;
         tail.prev = head;
     }
@@ -1152,23 +1179,18 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     /**
-     * Called once a {@link Throwable} hit the end of the {@link ChannelPipeline} without been handled by the user
-     * in {@link ChannelHandler#exceptionCaught(ChannelHandlerContext, Throwable)}.
+     * Called once a {@link Throwable} hit the end of the {@link ChannelPipeline} without been handled by the user in {@link ChannelHandler#exceptionCaught(ChannelHandlerContext, Throwable)}.
      */
     protected void onUnhandledInboundException(Throwable cause) {
         try {
-            logger.warn(
-                    "An exceptionCaught() event was fired, and it reached at the tail of the pipeline. " +
-                            "It usually means the last handler in the pipeline did not handle the exception.",
-                    cause);
+            logger.warn("An exceptionCaught() event was fired, and it reached at the tail of the pipeline. It usually means the last handler in the pipeline did not handle the exception.", cause);
         } finally {
             ReferenceCountUtil.release(cause);
         }
     }
 
     /**
-     * Called once the {@link ChannelInboundHandler#channelActive(ChannelHandlerContext)}event hit
-     * the end of the {@link ChannelPipeline}.
+     * Called once the {@link ChannelInboundHandler#channelActive(ChannelHandlerContext)}event hit the end of the {@link ChannelPipeline}.
      */
     protected void onUnhandledInboundChannelActive() {
     }
@@ -1310,8 +1332,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
-    final class HeadContext extends AbstractChannelHandlerContext
-            implements ChannelOutboundHandler, ChannelInboundHandler {
+    final class HeadContext extends AbstractChannelHandlerContext implements ChannelOutboundHandler, ChannelInboundHandler {
 
         private final Unsafe unsafe;
 
@@ -1321,6 +1342,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             setAddComplete();
         }
 
+        // todo 返回自己作为 Context 的 ChannelHandler 。
         @Override
         public ChannelHandler handler() {
             return this;
@@ -1342,10 +1364,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
 
         @Override
-        public void connect(
-                ChannelHandlerContext ctx,
-                SocketAddress remoteAddress, SocketAddress localAddress,
-                ChannelPromise promise) {
+        public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) {
             unsafe.connect(remoteAddress, localAddress, promise);
         }
 
