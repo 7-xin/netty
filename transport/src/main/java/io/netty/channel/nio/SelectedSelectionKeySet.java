@@ -21,9 +21,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+// todo 继承 AbstractSet 抽象类，已 select 的 NIO SelectionKey 集合。
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
+    // todo SelectionKey 数组
     SelectionKey[] keys;
+    // todo 数组可读大小
     int size;
 
     SelectedSelectionKeySet() {
@@ -36,8 +39,10 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
             return false;
         }
 
+        // todo 添加到数组
         keys[size++] = o;
         if (size == keys.length) {
+            // todo 超过数组上限，扩容
             increaseCapacity();
         }
 

@@ -21,8 +21,14 @@ import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Set;
 
+/**
+ * todo 基于 Netty {@link SelectedSelectionKeySet} 作为 selectionKeys 的 {@link Selector} 实现类。
+ */
 final class SelectedSelectionKeySetSelector extends Selector {
+
+    // todo SelectedSelectionKeySet 对象
     private final SelectedSelectionKeySet selectionKeys;
+    // todo 原始 Java NIO Selector 对象
     private final Selector delegate;
 
     SelectedSelectionKeySetSelector(Selector delegate, SelectedSelectionKeySet selectionKeys) {
@@ -52,7 +58,9 @@ final class SelectedSelectionKeySetSelector extends Selector {
 
     @Override
     public int selectNow() throws IOException {
+        // todo 重置 selectionKeys
         selectionKeys.reset();
+        // todo selectNow
         return delegate.selectNow();
     }
 

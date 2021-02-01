@@ -179,8 +179,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         return queueFactory.newTaskQueue(DEFAULT_MAX_PENDING_TASKS);
     }
 
+    /**
+     * todo Selector 元组。
+     */
     private static final class SelectorTuple {
+        // todo 未包装的 selector 对象
         final Selector unwrappedSelector;
+        // todo 包装的 selector 对象
         final Selector selector;
 
         SelectorTuple(Selector unwrappedSelector) {
@@ -202,6 +207,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
      * todo 而netty把它替换成了自己的数据结构, 数组, 从而使在任何情况下, 它的时间复杂度都是 O(1)
      */
     private SelectorTuple openSelector() {
+        // todo 创建 Selector 对象，作为 unwrappedSelector
         final Selector unwrappedSelector;
         try {
             // todo 使用 jdk 的 api创建新的 selector
@@ -241,6 +247,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
         // todo 确定是Selector的实现类  换了个名字
         final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
+        // todo 创建 SelectedSelectionKeySet 对象
         final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
 
         /**
@@ -294,6 +301,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         });
 
+        // todo 设置 SelectedSelectionKeySet 对象到 unwrappedSelector 中失败，则直接返回 SelectorTuple 对象。即，selector 也使用 unwrappedSelector
         if (maybeException instanceof Exception) {
             selectedKeys = null;
             Exception e = (Exception) maybeException;
@@ -304,6 +312,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         // todo 初始化自己维护被选中的key的集合  --> 数组类型的
         selectedKeys = selectedKeySet;
         logger.trace("instrumented a special java.util.Set into: {}", unwrappedSelector);
+
+        // todo 创建 SelectedSelectionKeySetSelector 对象
+        // todo 创建 SelectorTuple 对象。即，selector 也使用 SelectedSelectionKeySetSelector 对象。
         return new SelectorTuple(unwrappedSelector, new SelectedSelectionKeySetSelector(unwrappedSelector, selectedKeySet));
     }
 
@@ -712,11 +723,15 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * todo 基于 Netty {@link SelectedSelectionKeySetSelector} ，处理 Channel 新增就绪的 IO 事件。
+     */
     private void processSelectedKeysOptimized() {
+
+        // todo 遍历数组
         for (int i = 0; i < selectedKeys.size; ++i) {
             final SelectionKey k = selectedKeys.keys[i];
-            // null out entry in the array to allow to have it GC'ed once the Channel close
-            // See https://github.com/netty/netty/issues/2363
+            // null out entry in the array to allow to have it GC'ed once the Channel close. See https://github.com/netty/netty/issues/2363
             /**
              * todo 数组输出空项，从而允许在channel 关闭时对其进行垃圾回收
              * todo 数组中当前循环对应的keys质空，这种感兴趣的事件只处理一次就行
@@ -733,11 +748,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 // todo 进入这个方法，传进入 感兴趣的 key + NioSocketChannel
                 processSelectedKey(k, (AbstractNioChannel) a);
             } else {
+                // todo 使用 NioTask 处理一个 Channel 就绪的 IO 事件
                 @SuppressWarnings("unchecked")
                 NioTask<SelectableChannel> task = (NioTask<SelectableChannel>) a;
                 processSelectedKey(k, task);
             }
 
+            // todo NioEventLoop cancel 方法
             if (needsToSelectAgain) {
                 // null out entries in the array to allow to have it GC'ed once the Channel close
                 // See https://github.com/netty/netty/issues/2363
@@ -800,14 +817,16 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
 
             // Process OP_WRITE first as we may be able to write some queued buffers and so free memory.
+            // todo OP_WRITE 事件就绪
             if ((readyOps & SelectionKey.OP_WRITE) != 0) {
                 // Call forceFlush which will also take care of clear the OP_WRITE once there is nothing left to write
+                // todo 向 channel 中写入数据
                 ch.unsafe().forceFlush();
             }
 
-            // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead
-            // to a spin loop
-            // todo 同样是检查 readOps是否为零, 来检查是否出现了  jdk  空轮询的bug
+            // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead to a spin loop
+            // todo SelectionKey.OP_READ 或 SelectionKey.OP_ACCEPT 就绪
+            // todo 同样是检查 readOps是否为 0, 来检查是否出现了  jdk  空轮询的bug
             if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) {
                 unsafe.read();
             }
