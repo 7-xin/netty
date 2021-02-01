@@ -150,22 +150,26 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return new DefaultChannelHandlerContext(this, childExecutor(group), name, handler);
     }
 
+    // todo 创建子执行器。
     private EventExecutor childExecutor(EventExecutorGroup group) {
+        // todo 不创建子执行器
         if (group == null) {
             return null;
         }
+        // todo 根据配置项 SINGLE_EVENTEXECUTOR_PER_GROUP ，每个 Channel 从 EventExecutorGroup 获得不同 EventExecutor 执行器
         Boolean pinEventExecutor = channel.config().getOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP);
         if (pinEventExecutor != null && !pinEventExecutor) {
             return group.next();
         }
+        // todo 通过 childExecutors 缓存实现，一个 Channel 从 EventExecutorGroup 获得相同 EventExecutor 执行器
         Map<EventExecutorGroup, EventExecutor> childExecutors = this.childExecutors;
         if (childExecutors == null) {
             // Use size of 4 as most people only use one extra EventExecutor.
             childExecutors = this.childExecutors = new IdentityHashMap<EventExecutorGroup, EventExecutor>(4);
         }
-        // Pin one of the child executors once and remember it so that the same child executor
-        // is used to fire events for the same channel.
+        // Pin one of the child executors once and remember it so that the same child executor is used to fire events for the same channel.
         EventExecutor childExecutor = childExecutors.get(group);
+        // todo 缓存不存在，进行 从 EventExecutorGroup 获得 EventExecutor 执行器
         if (childExecutor == null) {
             childExecutor = group.next();
             childExecutors.put(group, childExecutor);
@@ -227,37 +231,52 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
+
         final AbstractChannelHandlerContext newCtx;
+
+        // todo 同步，为了防止多线程并发操作 pipeline 底层的双向链表
         synchronized (this) {
+            // todo 检查是否有重复的 handler
             checkMultiplicity(handler);
 
+            // todo 创建节点名
+            // todo 创建节点
             newCtx = newContext(group, filterName(name, handler), handler);
 
+            // todo 添加节点
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventLoop yet.
-            // In this case we add the context to the pipeline and add a task that will call
-            // ChannelHandler.handlerAdded(...) once the channel is registered.
+            // In this case we add the context to the pipeline and add a task that will call ChannelHandler.handlerAdded(...) once the channel is registered.
+            // todo pipeline 暂未注册，添加回调。再注册完成后，执行回调。详细解析，见 {@link #invokeHandlerAddedIfNeeded} 方法。
             if (!registered) {
+                // todo 设置 AbstractChannelHandlerContext 准备添加中
                 newCtx.setAddPending();
+                // todo 添加 PendingHandlerCallback 回调
                 callHandlerCallbackLater(newCtx, true);
                 return this;
             }
 
+            // todo 不在 EventLoop 的线程中，提交 EventLoop 中，执行回调用户方法
             EventExecutor executor = newCtx.executor();
             if (!executor.inEventLoop()) {
                 callHandlerAddedInEventLoop(newCtx, executor);
                 return this;
             }
         }
+
+        // todo 回调 ChannelHandler added 事件
         callHandlerAdded0(newCtx);
         return this;
     }
 
     private void addLast0(AbstractChannelHandlerContext newCtx) {
+        // todo 获得 tail 节点的前一个节点
         AbstractChannelHandlerContext prev = tail.prev;
+        // todo 新节点，指向 prev 和 tail 节点
         newCtx.prev = prev;
         newCtx.next = tail;
+        // todo 在 prev 和 tail ，指向新节点
         prev.next = newCtx;
         tail.prev = newCtx;
     }
@@ -307,10 +326,14 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         ctx.prev = newCtx;
     }
 
+    // todo 获得 ChannelHandler 的名字。
     private String filterName(String name, ChannelHandler handler) {
+        // todo 如果没有名字，调用 generateName 生成一个唯一的名字
         if (name == null) {
             return generateName(handler);
         }
+
+        // todo 如果已经传入名字，校验名字是否唯一
         checkDuplicateName(name);
         return name;
     }
@@ -408,6 +431,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             if (h == null) {
                 break;
             }
+            // todo 添加一个 ChannelHandler 到 ChannelPipeLine 中
             addLast(executor, null, h);
         }
 
@@ -415,20 +439,25 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private String generateName(ChannelHandler handler) {
+        // todo 缓存中查询，看是否已经生成了默认的名字
         Map<Class<?>, String> cache = nameCaches.get();
         Class<?> handlerType = handler.getClass();
         String name = cache.get(handlerType);
+        // todo 若未生成过，进行生成
         if (name == null) {
             name = generateName0(handlerType);
             cache.put(handlerType, name);
         }
 
-        // It's not very likely for a user to put more than one handler of the same type, but make sure to avoid
-        // any name conflicts.  Note that we don't cache the names generated here.
+        // It's not very likely for a user to put more than one handler of the same type, but make sure to avoid any name conflicts.
+        // Note that we don't cache the names generated here.
+        // todo 判断是否存在相同名字节点
         if (context0(name) != null) {
+            // todo 若存在，则使用基础名字 + 编号，循环生成，直到一个是唯一的
             String baseName = name.substring(0, name.length() - 1); // Strip the trailing '0'.
             for (int i = 1;; i ++) {
                 String newName = baseName + i;
+                // todo 判断是否存在相同名字的节点
                 if (context0(newName) == null) {
                     name = newName;
                     break;
@@ -622,18 +651,20 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         oldCtx.next = newCtx;
     }
 
+    // todo 检查是否有重复的 handler
     private static void checkMultiplicity(ChannelHandler handler) {
         if (handler instanceof ChannelHandlerAdapter) {
             ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+            // todo 若已经添加，并且未使用 @Sharable 注解，则抛出异常
             if (!h.isSharable() && h.added) {
-                throw new ChannelPipelineException(
-                        h.getClass().getName() +
-                        " is not a @Sharable handler, so can't be added or removed multiple times.");
+                throw new ChannelPipelineException(h.getClass().getName() + " is not a @Sharable handler, so can't be added or removed multiple times.");
             }
+            // todo 标记已经添加
             h.added = true;
         }
     }
 
+    // todo 执行回调 ChannelHandler 添加完成( added )事件。
     private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
         try {
             ctx.callHandlerAdded();
@@ -650,13 +681,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             }
 
             if (removed) {
-                fireExceptionCaught(new ChannelPipelineException(
-                        ctx.handler().getClass().getName() +
-                        ".handlerAdded() has thrown an exception; removed.", t));
+                fireExceptionCaught(new ChannelPipelineException(ctx.handler().getClass().getName() + ".handlerAdded() has thrown an exception; removed.", t));
             } else {
-                fireExceptionCaught(new ChannelPipelineException(
-                        ctx.handler().getClass().getName() +
-                        ".handlerAdded() has thrown an exception; also failed to remove.", t));
+                fireExceptionCaught(new ChannelPipelineException(ctx.handler().getClass().getName() + ".handlerAdded() has thrown an exception; also failed to remove.", t));
             }
         }
     }
@@ -1169,7 +1196,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private void callHandlerAddedInEventLoop(final AbstractChannelHandlerContext newCtx, EventExecutor executor) {
+        // todo 设置 AbstractChannelHandlerContext 准备添加中
         newCtx.setAddPending();
+        // todo 提交 EventLoop 中，执行回调 ChannelHandler added 事件
         executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -1460,14 +1489,21 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+    /**
+     * todo 实现 {@link Runnable} 接口，等待添加 {@link ChannelHandler} 回调抽象类。
+     */
     private abstract static class PendingHandlerCallback implements Runnable {
+        // todo {@link AbstractChannelHandlerContext} 节点
         final AbstractChannelHandlerContext ctx;
+
+        // todo 下一个回调 {@link PendingHandlerCallback} 对象
         PendingHandlerCallback next;
 
         PendingHandlerCallback(AbstractChannelHandlerContext ctx) {
             this.ctx = ctx;
         }
 
+        // todo 执行方法
         abstract void execute();
     }
 

@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  * </p>
  * <p>
  * Alternatively, the following adapter classes are provided for your convenience:
- * 为了方便还提供了以下适配器类
+ * todo 为了方便还提供了以下适配器类
  * <ul>
  * <li>{@link ChannelInboundHandlerAdapter} to handle inbound I/O events,</li>              入栈 io 事件
  * <li>{@link ChannelOutboundHandlerAdapter} to handle outbound I/O operations, and</li>    出栈 io 事件
@@ -54,12 +54,10 @@ import java.lang.annotation.Target;
  *
  * <h3>The context object</h3>
  * <p>
- * A {@link ChannelHandler} is provided with a {@link ChannelHandlerContext}
- * object.  A {@link ChannelHandler} is supposed to interact with the
- * {@link ChannelPipeline} it belongs to via a context object.  Using the
- * context object, the {@link ChannelHandler} can pass events upstream or
- * downstream, modify the pipeline dynamically, or store the information
- * (using {@link AttributeKey}s) which is specific to the handler.
+ * A {@link ChannelHandler} is provided with a {@link ChannelHandlerContext} object.
+ * A {@link ChannelHandler} is supposed to interact with the {@link ChannelPipeline} it belongs to via a context object.
+ * Using the context object, the {@link ChannelHandler} can pass events upstream or downstream, modify the pipeline dynamically,
+ * or store the information (using {@link AttributeKey}s) which is specific to the handler.
  *
  * <h3>State management</h3>
  *
@@ -90,11 +88,10 @@ import java.lang.annotation.Target;
  *     ...
  * }
  * </pre>
- * Because the handler instance has a state variable which is dedicated to
- * one connection, you have to create a new handler instance for each new
- * channel to avoid a race condition where a unauthenticated client can get
- * the confidential information:
+ * Because the handler instance has a state variable which is dedicated to one connection,
+ * you have to create a new handler instance for each new channel to avoid a race condition where a unauthenticated client can get the confidential information:
  * <pre>
+ *
  * // Create a new handler instance per channel.
  * // See {@link ChannelInitializer#initChannel(Channel)}.
  * public class DataServerInitializer extends {@link ChannelInitializer}&lt;{@link Channel}&gt; {
@@ -108,10 +105,8 @@ import java.lang.annotation.Target;
  *
  * <h4>Using {@link AttributeKey}s</h4>
  *
- * Although it's recommended to use member variables to store the state of a
- * handler, for some reason you might not want to create many handler instances.
- * In such a case, you can use {@link AttributeKey}s which is provided by
- * {@link ChannelHandlerContext}:
+ * Although it's recommended to use member variables to store the state of a handler, for some reason you might not want to create many handler instances.
+ * In such a case, you can use {@link AttributeKey}s which is provided by {@link ChannelHandlerContext}:
  * <pre>
  * public interface Message {
  *     // your methods here
@@ -139,9 +134,9 @@ import java.lang.annotation.Target;
  *     ...
  * }
  * </pre>
- * Now that the state of the handler is attached to the {@link ChannelHandlerContext}, you can add the
- * same handler instance to different pipelines:
- * 现在，处理程序的状态已附加到 ChannelHandlerContext 上，您可以将同一处理程序实例添加到不同的管道中
+ *
+ * Now that the state of the handler is attached to the {@link ChannelHandlerContext}, you can add the same handler instance to different pipelines:
+ * todo 现在，处理程序的状态已附加到 ChannelHandlerContext 上，您可以将同一处理程序实例添加到不同的管道中
  * <pre>
  * public class DataServerInitializer extends {@link ChannelInitializer}&lt;{@link Channel}&gt; {
  *
@@ -157,27 +152,19 @@ import java.lang.annotation.Target;
  *
  * <h4>The {@code @Sharable} annotation</h4>
  * <p>
- * In the example above which used an {@link AttributeKey},
- * you might have noticed the {@code @Sharable} annotation.
+ * In the example above which used an {@link AttributeKey}, you might have noticed the {@code @Sharable} annotation.
  * <p>
- * If a {@link ChannelHandler} is annotated with the {@code @Sharable}
- * annotation, it means you can create an instance of the handler just once and
- * add it to one or more {@link ChannelPipeline}s multiple times without
- * a race condition.
+ * If a {@link ChannelHandler} is annotated with the {@code @Sharable} annotation,
+ * it means you can create an instance of the handler just once and add it to one or more {@link ChannelPipeline}s multiple times without a race condition.
  * <p>
- * If this annotation is not specified, you have to create a new handler
- * instance every time you add it to a pipeline because it has unshared state
- * such as member variables.
+ * If this annotation is not specified, you have to create a new handler instance every time you add it to a pipeline because it has unshared state such as member variables.
  * <p>
- * This annotation is provided for documentation purpose, just like
- * <a href="http://www.javaconcurrencyinpractice.com/annotations/doc/">the JCIP annotations</a>.
+ * This annotation is provided for documentation purpose, just like <a href="http://www.javaconcurrencyinpractice.com/annotations/doc/">the JCIP annotations</a>.
  *
  * <h3>Additional resources worth reading</h3>
  * <p>
- * Please refer to the {@link ChannelHandler}, and
- * {@link ChannelPipeline} to find out more about inbound and outbound operations,
- * what fundamental differences they have, how they flow in a  pipeline,  and how to handle
- * the operation in your application.
+ * Please refer to the {@link ChannelHandler}, and {@link ChannelPipeline} to find out more about inbound and outbound operations,
+ * what fundamental differences they have, how they flow in a  pipeline,  and how to handle the operation in your application.
  */
 public interface ChannelHandler {
 
