@@ -155,6 +155,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return this;
     }
 
+    // todo 处理 channel 注册
     static void invokeChannelRegistered(final AbstractChannelHandlerContext next) {
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
@@ -875,13 +876,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
 
         if (!allowVoidPromise && promise instanceof VoidChannelPromise) {
-            throw new IllegalArgumentException(
-                    StringUtil.simpleClassName(VoidChannelPromise.class) + " not allowed for this operation");
+            throw new IllegalArgumentException( StringUtil.simpleClassName(VoidChannelPromise.class) + " not allowed for this operation");
         }
 
         if (promise instanceof AbstractChannel.CloseFuture) {
-            throw new IllegalArgumentException(
-                    StringUtil.simpleClassName(AbstractChannel.CloseFuture.class) + " not allowed in a pipeline");
+            throw new IllegalArgumentException( StringUtil.simpleClassName(AbstractChannel.CloseFuture.class) + " not allowed in a pipeline");
         }
         return false;
     }
@@ -910,12 +909,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
-    private static boolean skipContext(
-            AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
+    private static boolean skipContext(AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
         // Ensure we correctly handle MASK_EXCEPTION_CAUGHT which is not included in the MASK_EXCEPTION_CAUGHT
         return (ctx.executionMask & (onlyMask | mask)) == 0 ||
-                // We can only skip if the EventExecutor is the same as otherwise we need to ensure we offload
-                // everything to preserve ordering.
+                // We can only skip if the EventExecutor is the same as otherwise we need to ensure we offload everything to preserve ordering.
                 //
                 // See https://github.com/netty/netty/issues/10067
                 (ctx.executor() == currentExecutor && (ctx.executionMask & mask) == 0);
@@ -951,8 +948,8 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     final void callHandlerAdded() throws Exception {
-        // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
-        // any pipeline events ctx.handler() will miss them because the state will not allow it.
+        // We must call setAddComplete before calling handlerAdded.
+        // Otherwise if the handlerAdded method generates any pipeline events ctx.handler() will miss them because the state will not allow it.
         if (setAddComplete()) {
             handler().handlerAdded(this);
         }

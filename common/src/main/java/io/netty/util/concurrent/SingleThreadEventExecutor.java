@@ -419,8 +419,8 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     /**
-     * Execute all expired scheduled tasks and all current tasks in the executor queue until both queues are empty,
-     * or {@code maxDrainAttempts} has been exceeded.
+     * Execute all expired scheduled tasks and all current tasks in the executor queue until both queues are empty, or {@code maxDrainAttempts} has been exceeded.
+     *
      * @param maxDrainAttempts The maximum amount of times this method attempts to drain from queues. This is to prevent
      *                         continuous task execution and scheduling from preventing the EventExecutor thread to
      *                         make progress and return to the selector mechanism to process inbound I/O events.

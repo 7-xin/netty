@@ -22,9 +22,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * 拒绝执行处理
- *
  * Expose helper methods which create different {@link RejectedExecutionHandler}s.
+ *
+ * todo 拒绝执行处理
  */
 public final class RejectedExecutionHandlers {
     private static final RejectedExecutionHandler REJECT = new RejectedExecutionHandler() {
