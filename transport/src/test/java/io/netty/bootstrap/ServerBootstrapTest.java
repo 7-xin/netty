@@ -23,6 +23,7 @@ import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.test.handler.TestHandler;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -34,8 +35,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ServerBootstrapTest {
 
-    @Test
-    public void startTest1() {
+    public static void main(String[] args) {
         // Configure SSL.
         // 配置 SSL
 //        final SslContext sslCtx;
@@ -58,6 +58,7 @@ public class ServerBootstrapTest {
             b.group(bossGroup, workerGroup) // 设置使用的 EventLoopGroup
                     .channel(NioServerSocketChannel.class) // 设置要被实例化的为 NioServerSocketChannel 类
                     .option(ChannelOption.SO_BACKLOG, 100) // 设置 NioServerSocketChannel 的可选项
+                    .handler(new TestHandler())
 //                    .handler(new LoggingHandler(LogLevel.INFO)) // 设置 NioServerSocketChannel 的处理器
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override

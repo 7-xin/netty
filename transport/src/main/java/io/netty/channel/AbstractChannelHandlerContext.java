@@ -489,13 +489,17 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     @Override
     public ChannelFuture bind(final SocketAddress localAddress, final ChannelPromise promise) {
         ObjectUtil.checkNotNull(localAddress, "localAddress");
+        // todo 判断是否为合法的 promise 对象
         if (isNotValidPromise(promise, false)) {
             // cancelled
             return promise;
         }
 
+        // todo 获得下一个 Outbound 节点
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_BIND);
+        // todo 获得下一个 Outbound 节点的执行器
         EventExecutor executor = next.executor();
+        // todo 调用下一个 Outbound 节点的 bind 方法
         if (executor.inEventLoop()) {
             next.invokeBind(localAddress, promise);
         } else {

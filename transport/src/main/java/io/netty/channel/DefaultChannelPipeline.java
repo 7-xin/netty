@@ -885,12 +885,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     /**
-     * Removes all handlers from the pipeline one by one from tail (exclusive) to head (exclusive) to trigger
-     * handlerRemoved().
+     * Removes all handlers from the pipeline one by one from tail (exclusive) to head (exclusive) to trigger handlerRemoved().
      *
-     * Note that we traverse up the pipeline ({@link #destroyUp(AbstractChannelHandlerContext, boolean)})
-     * before traversing down ({@link #destroyDown(Thread, AbstractChannelHandlerContext, boolean)}) so that
-     * the handlers are removed after all events are handled.
+     * Note that we traverse up the pipeline ({@link #destroyUp(AbstractChannelHandlerContext, boolean)}) before traversing down ({@link #destroyDown(Thread, AbstractChannelHandlerContext, boolean)})
+     * so that the handlers are removed after all events are handled.
      *
      * See: https://github.com/netty/netty/issues/3156
      */

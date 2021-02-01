@@ -36,8 +36,7 @@ import io.netty.channel.ChannelHandlerMask.Skip;
 public class ChannelInboundHandlerAdapter extends ChannelHandlerAdapter implements ChannelInboundHandler {
 
     /**
-     * Calls {@link ChannelHandlerContext#fireChannelRegistered()} to forward
-     * to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
+     * Calls {@link ChannelHandlerContext#fireChannelRegistered()} to forward to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
      *
      * Sub-classes may override this method to change behavior.
      */

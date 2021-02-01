@@ -21,38 +21,30 @@ import io.netty.util.concurrent.FutureListener;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 
+/**
+ * todo 定义了所有 Outbound 事件对应的方法
+ */
 public interface ChannelOutboundInvoker {
 
     /**
-     * Request to bind to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
-     * completes, either because the operation was successful or because of an error.
+     * Request to bind to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation completes, either because the operation was successful or because of an error.
      * <p>
-     * This will result in having the
-     * {@link ChannelOutboundHandler#bind(ChannelHandlerContext, SocketAddress, ChannelPromise)} method
-     * called of the next {@link ChannelOutboundHandler} contained in the {@link ChannelPipeline} of the
-     * {@link Channel}.
+     * This will result in having the {@link ChannelOutboundHandler#bind(ChannelHandlerContext, SocketAddress, ChannelPromise)} method called of the next {@link ChannelOutboundHandler} contained in the {@link ChannelPipeline} of the {@link Channel}.
      */
     ChannelFuture bind(SocketAddress localAddress);
 
     /**
-     * Request to connect to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
-     * completes, either because the operation was successful or because of an error.
+     * Request to connect to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation completes, either because the operation was successful or because of an error.
      * <p>
-     * If the connection fails because of a connection timeout, the {@link ChannelFuture} will get failed with
-     * a {@link ConnectTimeoutException}. If it fails because of connection refused a {@link ConnectException}
-     * will be used.
+     * If the connection fails because of a connection timeout, the {@link ChannelFuture} will get failed with a {@link ConnectTimeoutException}.
+     * If it fails because of connection refused a {@link ConnectException} will be used.
      * <p>
-     * This will result in having the
-     * {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, ChannelPromise)}
-     * method called of the next {@link ChannelOutboundHandler} contained in the {@link ChannelPipeline} of the
-     * {@link Channel}.
+     * This will result in having the {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, ChannelPromise)} method called of the next {@link ChannelOutboundHandler} contained in the {@link ChannelPipeline} of the {@link Channel}.
      */
     ChannelFuture connect(SocketAddress remoteAddress);
 
     /**
-     * Request to connect to the given {@link SocketAddress} while bind to the localAddress and notify the
-     * {@link ChannelFuture} once the operation completes, either because the operation was successful or because of
-     * an error.
+     * Request to connect to the given {@link SocketAddress} while bind to the localAddress and notify the {@link ChannelFuture} once the operation completes, either because the operation was successful or because of an error.
      * <p>
      * This will result in having the
      * {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, ChannelPromise)}
