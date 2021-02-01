@@ -43,15 +43,13 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
     }
 
     /**
-     * Return {@code true} if the implementation is {@link Sharable} and so can be added
-     * to different {@link ChannelPipeline}s.
+     * Return {@code true} if the implementation is {@link Sharable} and so can be added to different {@link ChannelPipeline}s.
      */
     public boolean isSharable() {
         /**
-         * Cache the result of {@link Sharable} annotation detection to workaround a condition. We use a
-         * {@link ThreadLocal} and {@link WeakHashMap} to eliminate the volatile write/reads. Using different
-         * {@link WeakHashMap} instances per {@link Thread} is good enough for us and the number of
-         * {@link Thread}s are quite limited anyway.
+         * Cache the result of {@link Sharable} annotation detection to workaround a condition.
+         * We use a {@link ThreadLocal} and {@link WeakHashMap} to eliminate the volatile write/reads.
+         * Using different {@link WeakHashMap} instances per {@link Thread} is good enough for us and the number of {@link Thread}s are quite limited anyway.
          *
          * See <a href="https://github.com/netty/netty/issues/2289">#2289</a>.
          */

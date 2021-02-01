@@ -26,21 +26,18 @@ import io.netty.util.internal.StringUtil;
 import java.util.List;
 
 /**
- * A specialized variation of {@link ByteToMessageDecoder} which enables implementation
- * of a non-blocking decoder in the blocking I/O paradigm.
+ * A specialized variation of {@link ByteToMessageDecoder} which enables implementation of a non-blocking decoder in the blocking I/O paradigm.
  * <p>
- * The biggest difference between {@link ReplayingDecoder} and
- * {@link ByteToMessageDecoder} is that {@link ReplayingDecoder} allows you to
- * implement the {@code decode()} and {@code decodeLast()} methods just like
- * all required bytes were received already, rather than checking the
- * availability of the required bytes.  For example, the following
- * {@link ByteToMessageDecoder} implementation:
+ * The biggest difference between {@link ReplayingDecoder} and {@link ByteToMessageDecoder} is that {@link ReplayingDecoder} allows you to
+ * implement the {@code decode()} and {@code decodeLast()} methods just like all required bytes were received already,
+ * rather than checking the availability of the required bytes.
+ *
+ * For example, the following {@link ByteToMessageDecoder} implementation:
  * <pre>
  * public class IntegerHeaderFrameDecoder extends {@link ByteToMessageDecoder} {
  *
  *   {@code @Override}
- *   protected void decode({@link ChannelHandlerContext} ctx,
- *                           {@link ByteBuf} buf, List&lt;Object&gt; out) throws Exception {
+ *   protected void decode({@link ChannelHandlerContext} ctx, {@link ByteBuf} buf, List&lt;Object&gt; out) throws Exception {
  *
  *     if (buf.readableBytes() &lt; 4) {
  *        return;
@@ -60,11 +57,9 @@ import java.util.List;
  * </pre>
  * is simplified like the following with {@link ReplayingDecoder}:
  * <pre>
- * public class IntegerHeaderFrameDecoder
- *      extends {@link ReplayingDecoder}&lt;{@link Void}&gt; {
+ * public class IntegerHeaderFrameDecoder extends {@link ReplayingDecoder}&lt;{@link Void}&gt; {
  *
- *   protected void decode({@link ChannelHandlerContext} ctx,
- *                           {@link ByteBuf} buf, List&lt;Object&gt; out) throws Exception {
+ *   protected void decode({@link ChannelHandlerContext} ctx, {@link ByteBuf} buf, List&lt;Object&gt; out) throws Exception {
  *
  *     out.add(buf.readBytes(buf.readInt()));
  *   }
@@ -73,36 +68,27 @@ import java.util.List;
  *
  * <h3>How does this work?</h3>
  * <p>
- * {@link ReplayingDecoder} passes a specialized {@link ByteBuf}
- * implementation which throws an {@link Error} of certain type when there's not
- * enough data in the buffer.  In the {@code IntegerHeaderFrameDecoder} above,
- * you just assumed that there will be 4 or more bytes in the buffer when
- * you call {@code buf.readInt()}.  If there's really 4 bytes in the buffer,
- * it will return the integer header as you expected.  Otherwise, the
- * {@link Error} will be raised and the control will be returned to
- * {@link ReplayingDecoder}.  If {@link ReplayingDecoder} catches the
- * {@link Error}, then it will rewind the {@code readerIndex} of the buffer
- * back to the 'initial' position (i.e. the beginning of the buffer) and call
- * the {@code decode(..)} method again when more data is received into the
- * buffer.
+ * {@link ReplayingDecoder} passes a specialized {@link ByteBuf} implementation which throws an {@link Error} of certain type when there's not enough data in the buffer.
+ * In the {@code IntegerHeaderFrameDecoder} above, you just assumed that there will be 4 or more bytes in the buffer when you call {@code buf.readInt()}.
+ * If there's really 4 bytes in the buffer, it will return the integer header as you expected.
+ * Otherwise, the {@link Error} will be raised and the control will be returned to {@link ReplayingDecoder}.
+ * If {@link ReplayingDecoder} catches the {@link Error}, then it will rewind the {@code readerIndex} of the buffer back to the 'initial' position (i.e. the beginning of the buffer)
+ * and call the {@code decode(..)} method again when more data is received into the buffer.
  * <p>
- * Please note that {@link ReplayingDecoder} always throws the same cached
- * {@link Error} instance to avoid the overhead of creating a new {@link Error}
- * and filling its stack trace for every throw.
+ *
+ * Please note that {@link ReplayingDecoder} always throws the same cached {@link Error} instance to avoid the overhead of creating a new {@link Error} and filling its stack trace for every throw.
  *
  * <h3>Limitations</h3>
  * <p>
- * At the cost of the simplicity, {@link ReplayingDecoder} enforces you a few
- * limitations:
+ * At the cost of the simplicity, {@link ReplayingDecoder} enforces you a few limitations:
  * <ul>
  * <li>Some buffer operations are prohibited.</li>
- * <li>Performance can be worse if the network is slow and the message
- *     format is complicated unlike the example above.  In this case, your
- *     decoder might have to decode the same part of the message over and over
- *     again.</li>
- * <li>You must keep in mind that {@code decode(..)} method can be called many
- *     times to decode a single message.  For example, the following code will
- *     not work:
+ * <li>
+ *     Performance can be worse if the network is slow and the message format is complicated unlike the example above.
+ *     In this case, your decoder might have to decode the same part of the message over and over again.
+ * </li>
+ * <li>You must keep in mind that {@code decode(..)} method can be called many times to decode a single message.
+ *     For example, the following code will not work:
  * <pre> public class MyDecoder extends {@link ReplayingDecoder}&lt;{@link Void}&gt; {
  *
  *   private final Queue&lt;Integer&gt; values = new LinkedList&lt;Integer&gt;();
@@ -120,9 +106,8 @@ import java.util.List;
  *     out.add(values.poll() + values.poll());
  *   }
  * }</pre>
- *      The correct implementation looks like the following, and you can also
- *      utilize the 'checkpoint' feature which is explained in detail in the
- *      next section.
+ *      The correct implementation looks like the following, and you can also utilize the 'checkpoint' feature which is explained in detail in the next section.
+ *
  * <pre> public class MyDecoder extends {@link ReplayingDecoder}&lt;{@link Void}&gt; {
  *
  *   private final Queue&lt;Integer&gt; values = new LinkedList&lt;Integer&gt;();
@@ -148,20 +133,15 @@ import java.util.List;
  *
  * <h3>Improving the performance</h3>
  * <p>
- * Fortunately, the performance of a complex decoder implementation can be
- * improved significantly with the {@code checkpoint()} method.  The
- * {@code checkpoint()} method updates the 'initial' position of the buffer so
- * that {@link ReplayingDecoder} rewinds the {@code readerIndex} of the buffer
+ * Fortunately, the performance of a complex decoder implementation can be improved significantly with the {@code checkpoint()} method.
+ * The {@code checkpoint()} method updates the 'initial' position of the buffer so that {@link ReplayingDecoder} rewinds the {@code readerIndex} of the buffer
  * to the last position where you called the {@code checkpoint()} method.
  *
  * <h4>Calling {@code checkpoint(T)} with an {@link Enum}</h4>
  * <p>
- * Although you can just use {@code checkpoint()} method and manage the state
- * of the decoder by yourself, the easiest way to manage the state of the
- * decoder is to create an {@link Enum} type which represents the current state
- * of the decoder and to call {@code checkpoint(T)} method whenever the state
- * changes.  You can have as many states as you want depending on the
- * complexity of the message you want to decode:
+ * Although you can just use {@code checkpoint()} method and manage the state of the decoder by yourself,
+ * the easiest way to manage the state of the decoder is to create an {@link Enum} type which represents the current state of the decoder and to call {@code checkpoint(T)} method whenever the state changes.
+ * You can have as many states as you want depending on the complexity of the message you want to decode:
  *
  * <pre>
  * public enum MyDecoderState {
@@ -229,13 +209,10 @@ import java.util.List;
  *
  * <h3>Replacing a decoder with another decoder in a pipeline</h3>
  * <p>
- * If you are going to write a protocol multiplexer, you will probably want to
- * replace a {@link ReplayingDecoder} (protocol detector) with another
- * {@link ReplayingDecoder}, {@link ByteToMessageDecoder} or {@link MessageToMessageDecoder}
- * (actual protocol decoder).
- * It is not possible to achieve this simply by calling
- * {@link ChannelPipeline#replace(ChannelHandler, String, ChannelHandler)}, but
- * some additional steps are required:
+ * If you are going to write a protocol multiplexer, you will probably want to replace a {@link ReplayingDecoder} (protocol detector) with another {@link ReplayingDecoder},
+ * {@link ByteToMessageDecoder} or {@link MessageToMessageDecoder} (actual protocol decoder).
+ * It is not possible to achieve this simply by calling {@link ChannelPipeline#replace(ChannelHandler, String, ChannelHandler)},
+ * but some additional steps are required:
  * <pre>
  * public class FirstDecoder extends {@link ReplayingDecoder}&lt;{@link Void}&gt; {
  *
@@ -262,8 +239,7 @@ import java.util.List;
  *     }
  * </pre>
  * @param <S>
- *        the state type which is usually an {@link Enum}; use {@link Void} if state management is
- *        unused
+ *        the state type which is usually an {@link Enum}; use {@link Void} if state management is unused
  */
 public abstract class ReplayingDecoder<S> extends ByteToMessageDecoder {
 

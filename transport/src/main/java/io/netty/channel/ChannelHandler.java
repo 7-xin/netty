@@ -176,32 +176,26 @@ public interface ChannelHandler {
     void handlerAdded(ChannelHandlerContext ctx) throws Exception;
 
     /**
-     * Gets called after the {@link ChannelHandler} was removed from the actual context and it doesn't handle events
-     * anymore.
-     * todo handler 被移除时得回调
+     * Gets called after the {@link ChannelHandler} was removed from the actual context and it doesn't handle events anymore.
+     * todo handler 被移除时得回调     一般用于 ChannelHandler 的销毁逻辑
      */
     void handlerRemoved(ChannelHandlerContext ctx) throws Exception;
 
     /**
      * Gets called if a {@link Throwable} was thrown.
      *
-     * @deprecated if you want to handle this event you should implement {@link ChannelInboundHandler} and
-     * implement the method there.
+     * @deprecated if you want to handle this event you should implement {@link ChannelInboundHandler} and implement the method there.
+     * todo 抓取到异常。目前废弃，移动到 {@link ChannelInboundHandler} 接口中，最为对 Exception Inbound 事件的处理
      */
     @Deprecated
     void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception;
 
     /**
-     * Indicates that the same instance of the annotated {@link ChannelHandler}
-     * can be added to one or more {@link ChannelPipeline}s multiple times
-     * without a race condition.
+     * Indicates that the same instance of the annotated {@link ChannelHandler} can be added to one or more {@link ChannelPipeline}s multiple times without a race condition.
      * <p>
-     * If this annotation is not specified, you have to create a new handler
-     * instance every time you add it to a pipeline because it has unshared
-     * state such as member variables.
+     * If this annotation is not specified, you have to create a new handler instance every time you add it to a pipeline because it has unshared state such as member variables.
      * <p>
-     * This annotation is provided for documentation purpose, just like
-     * <a href="http://www.javaconcurrencyinpractice.com/annotations/doc/">the JCIP annotations</a>.
+     * This annotation is provided for documentation purpose, just like <a href="http://www.javaconcurrencyinpractice.com/annotations/doc/">the JCIP annotations</a>.
      */
     @Inherited
     @Documented

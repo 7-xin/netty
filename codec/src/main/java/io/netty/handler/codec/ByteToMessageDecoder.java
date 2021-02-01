@@ -32,17 +32,14 @@ import static io.netty.util.internal.ObjectUtil.checkPositive;
 import static java.lang.Integer.MAX_VALUE;
 
 /**
- * {@link ChannelInboundHandlerAdapter} which decodes bytes in a stream-like fashion from one {@link ByteBuf} to an
- * other Message type.
+ * {@link ChannelInboundHandlerAdapter} which decodes bytes in a stream-like fashion from one {@link ByteBuf} to an other Message type.
  *
- * For example here is an implementation which reads all readable bytes from
- * the input {@link ByteBuf} and create a new {@link ByteBuf}.
+ * For example here is an implementation which reads all readable bytes from the input {@link ByteBuf} and create a new {@link ByteBuf}.
  *
  * <pre>
  *     public class SquareDecoder extends {@link ByteToMessageDecoder} {
  *         {@code @Override}
- *         public void decode({@link ChannelHandlerContext} ctx, {@link ByteBuf} in, List&lt;Object&gt; out)
- *                 throws {@link Exception} {
+ *         public void decode({@link ChannelHandlerContext} ctx, {@link ByteBuf} in, List&lt;Object&gt; out) throws {@link Exception} {
  *             out.add(in.readBytes(in.readableBytes()));
  *         }
  *     }
@@ -51,26 +48,25 @@ import static java.lang.Integer.MAX_VALUE;
  * <h3>Frame detection</h3>
  * <p>
  * Generally frame detection should be handled earlier in the pipeline by adding a
- * {@link DelimiterBasedFrameDecoder}, {@link FixedLengthFrameDecoder}, {@link LengthFieldBasedFrameDecoder},
- * or {@link LineBasedFrameDecoder}.
+ * {@link DelimiterBasedFrameDecoder}, {@link FixedLengthFrameDecoder}, {@link LengthFieldBasedFrameDecoder}, or {@link LineBasedFrameDecoder}.
  * <p>
- * If a custom frame decoder is required, then one needs to be careful when implementing
- * one with {@link ByteToMessageDecoder}. Ensure there are enough bytes in the buffer for a
- * complete frame by checking {@link ByteBuf#readableBytes()}. If there are not enough bytes
- * for a complete frame, return without modifying the reader index to allow more bytes to arrive.
+ * If a custom frame decoder is required, then one needs to be careful when implementing one with {@link ByteToMessageDecoder}.
+ * Ensure there are enough bytes in the buffer for a complete frame by checking {@link ByteBuf#readableBytes()}.
+ * If there are not enough bytes for a complete frame, return without modifying the reader index to allow more bytes to arrive.
  * <p>
  * To check for complete frames without modifying the reader index, use methods like {@link ByteBuf#getInt(int)}.
  * One <strong>MUST</strong> use the reader index when using methods like {@link ByteBuf#getInt(int)}.
- * For example calling <tt>in.getInt(0)</tt> is assuming the frame starts at the beginning of the buffer, which
- * is not always the case. Use <tt>in.getInt(in.readerIndex())</tt> instead.
+ * For example calling <tt>in.getInt(0)</tt> is assuming the frame starts at the beginning of the buffer, which is not always the case.
+ * Use <tt>in.getInt(in.readerIndex())</tt> instead.
+ *
  * <h3>Pitfalls</h3>
  * <p>
- * Be aware that sub-classes of {@link ByteToMessageDecoder} <strong>MUST NOT</strong>
- * annotated with {@link @Sharable}.
+ * Be aware that sub-classes of {@link ByteToMessageDecoder} <strong>MUST NOT</strong> annotated with {@link @Sharable}.
  * <p>
- * Some methods such as {@link ByteBuf#readBytes(int)} will cause a memory leak if the returned buffer
- * is not released or added to the <tt>out</tt> {@link List}. Use derived buffers like {@link ByteBuf#readSlice(int)}
- * to avoid leaking memory.
+ * Some methods such as {@link ByteBuf#readBytes(int)} will cause a memory leak if the returned buffer is not released or added to the <tt>out</tt> {@link List}.
+ * Use derived buffers like {@link ByteBuf#readSlice(int)} to avoid leaking memory.
+ *
+ * todo 字节转化为消息
  */
 public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter {
 
