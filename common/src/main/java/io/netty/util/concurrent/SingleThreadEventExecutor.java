@@ -232,7 +232,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     protected static Runnable pollTaskFrom(Queue<Runnable> taskQueue) {
         for (;;) {
+            // todo 获得并移除队首元素。如果获得不到，返回 null
             Runnable task = taskQueue.poll();
+            // todo 忽略 WAKEUP_TASK 任务，因为是空任务
             if (task != WAKEUP_TASK) {
                 return task;
             }
@@ -393,18 +395,25 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     protected boolean runAllTasks() {
         assert inEventLoop();
         boolean fetchedAll;
+        // todo 是否执行过任务
         boolean ranAtLeastOne = false;
 
         do {
+            // todo 从定时任务获得到时间的任务
             fetchedAll = fetchFromScheduledTaskQueue();
+            // todo 执行任务队列中的所有任务
             if (runAllTasksFrom(taskQueue)) {
+                // todo 若有任务执行，则标记为 true
                 ranAtLeastOne = true;
             }
         } while (!fetchedAll); // keep on processing until we fetched all scheduled tasks.
 
+        // todo 如果执行过任务，则设置最后执行时间
         if (ranAtLeastOne) {
             lastExecutionTime = ScheduledFutureTask.nanoTime();
         }
+
+        // todo 执行所有任务完成的后续方法
         afterRunningAllTasks();
         return ranAtLeastOne;
     }
@@ -443,13 +452,18 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * @return {@code true} if at least one task was executed.
      */
     protected final boolean runAllTasksFrom(Queue<Runnable> taskQueue) {
+        // todo 获得队头的任务
         Runnable task = pollTaskFrom(taskQueue);
+        // todo 获取不到，结束执行，返回 false
         if (task == null) {
             return false;
         }
         for (;;) {
+            // todo 执行任务
             safeExecute(task);
+            // todo 获得队头的任务
             task = pollTaskFrom(taskQueue);
+            // todo 获取不到，结束执行，返回 true
             if (task == null) {
                 return true;
             }
@@ -477,42 +491,61 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     /**
-     * Poll all tasks from the task queue and run them via {@link Runnable#run()} method.  This method stops running
-     * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
+     * Poll all tasks from the task queue and run them via {@link Runnable#run()} method.
+     * This method stops running the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
+        // todo 从定时任务获得到时间的任务
         fetchFromScheduledTaskQueue();
+        // todo 获得队列头的任务
         Runnable task = pollTask();
+        // todo 获取不到，结束执行
         if (task == null) {
+            // todo 执行所有任务完成的后续方法
             afterRunningAllTasks();
             return false;
         }
 
+        // todo 计算执行任务截止时间
         final long deadline = timeoutNanos > 0 ? ScheduledFutureTask.nanoTime() + timeoutNanos : 0;
+        // todo 执行任务计数
         long runTasks = 0;
         long lastExecutionTime;
+
+        // todo 循环执行任务
         for (;;) {
+            // todo 执行任务
             safeExecute(task);
 
+            // todo 计数 + 1
             runTasks ++;
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
+            // todo 每隔 64 个任务检查一次时间，因为 nanoTime() 是相对费时的操作
+            // todo 64 这个值当前是硬编码的，无法配置，可能会成为一个问题。
             if ((runTasks & 0x3F) == 0) {
+                // todo 重新获得事件
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
+                // todo 超过任务截止时间，结束
                 if (lastExecutionTime >= deadline) {
                     break;
                 }
             }
 
+            // todo 获得队头的任务
             task = pollTask();
+            // todo，获取不到 结束执行
             if (task == null) {
+                // todo 重新获得时间
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 break;
             }
         }
 
+        // todo 执行所有任务完成的后续方法
         afterRunningAllTasks();
+        // todo 设置最后执行时间
         this.lastExecutionTime = lastExecutionTime;
         return true;
     }
