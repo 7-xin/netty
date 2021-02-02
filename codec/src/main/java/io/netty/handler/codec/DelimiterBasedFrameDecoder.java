@@ -24,10 +24,8 @@ import io.netty.util.internal.ObjectUtil;
 import java.util.List;
 
 /**
- * A decoder that splits the received {@link ByteBuf}s by one or more
- * delimiters.  It is particularly useful for decoding the frames which ends
- * with a delimiter such as {@link Delimiters#nulDelimiter() NUL} or
- * {@linkplain Delimiters#lineDelimiter() newline characters}.
+ * A decoder that splits the received {@link ByteBuf}s by one or more delimiters.
+ * It is particularly useful for decoding the frames which ends with a delimiter such as {@link Delimiters#nulDelimiter() NUL} or {@linkplain Delimiters#lineDelimiter() newline characters}.
  *
  * <h3>Predefined delimiters</h3>
  * <p>
@@ -35,17 +33,15 @@ import java.util.List;
  *
  * <h3>Specifying more than one delimiter</h3>
  * <p>
- * {@link DelimiterBasedFrameDecoder} allows you to specify more than one
- * delimiter.  If more than one delimiter is found in the buffer, it chooses
- * the delimiter which produces the shortest frame.  For example, if you have
- * the following data in the buffer:
+ * {@link DelimiterBasedFrameDecoder} allows you to specify more than one delimiter.
+ * If more than one delimiter is found in the buffer, it chooses the delimiter which produces the shortest frame.
+ * For example, if you have the following data in the buffer:
  * <pre>
  * +--------------+
  * | ABC\nDEF\r\n |
  * +--------------+
  * </pre>
- * a {@link DelimiterBasedFrameDecoder}({@link Delimiters#lineDelimiter() Delimiters.lineDelimiter()})
- * will choose {@code '\n'} as the first delimiter and produce two frames:
+ * a {@link DelimiterBasedFrameDecoder}({@link Delimiters#lineDelimiter() Delimiters.lineDelimiter()}) will choose {@code '\n'} as the first delimiter and produce two frames:
  * <pre>
  * +-----+-----+
  * | ABC | DEF |
@@ -57,6 +53,8 @@ import java.util.List;
  * | ABC\nDEF |
  * +----------+
  * </pre>
+ *
+ * todo 分隔符解码器  可以自己指定分隔符
  */
 public class DelimiterBasedFrameDecoder extends ByteToMessageDecoder {
 

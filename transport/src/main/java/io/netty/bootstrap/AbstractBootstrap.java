@@ -360,11 +360,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         // If we are here and the promise is not failed, it's one of the following cases:
         // 1) If we attempted registration from the event loop, the registration has been completed at this point.
         //    i.e. It's safe to attempt bind() or connect() now because the channel has been registered.
-        // 2) If we attempted registration from the other thread, the registration request has been successfully
-        //    added to the event loop's task queue for later execution.
+        // 2) If we attempted registration from the other thread, the registration request has been successfully added to the event loop's task queue for later execution.
         //    i.e. It's safe to attempt bind() or connect() now:
-        //         because bind() or connect() will be executed *after* the scheduled registration task is executed
-        //         because register(), bind(), and connect() are all bound to the same thread.
+        //         because bind() or connect() will be executed *after* the scheduled registration task is executed because register(), bind(), and connect() are all bound to the same thread.
 
         return regFuture;
     }

@@ -18,6 +18,7 @@ package io.netty.handler.codec.json;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.CorruptedFrameException;
@@ -37,7 +38,7 @@ import java.util.List;
  * <p>
  * This class does not do any real parsing or validation. A sequence of bytes is considered a JSON object/array
  * if it contains a matching number of opening and closing braces/brackets. It's up to a subsequent
- * {@link ChannelHandler} to parse the JSON text into a more usable form i.e. a POJO.
+ * {@link ChannelHandler } to parse the JSON text into a more usable form i.e. a POJO.
  */
 public class JsonObjectDecoder extends ByteToMessageDecoder {
 

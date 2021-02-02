@@ -36,8 +36,7 @@ import java.util.PriorityQueue;
  * marked as reserved so it is always used by exactly one ByteBuf and no more)
  *
  * For simplicity all sizes are normalized according to {@link PoolArena#size2SizeIdx(int)} method.
- * This ensures that when we request for memory segments of size > pageSize the normalizedCapacity
- * equals the next nearest size in {@link SizeClasses}.
+ * This ensures that when we request for memory segments of size > pageSize the normalizedCapacity equals the next nearest size in {@link SizeClasses}.
  *
  *
  *  A chunk has the following layout:
@@ -128,6 +127,7 @@ import java.util.PriorityQueue;
  * 3) merge continuous avail runs
  * 4) save the merged run
  *
+ * todo 内存块
  */
 final class PoolChunk<T> implements PoolChunkMetric {
     private static final int SIZE_BIT_LENGTH = 15;
@@ -140,8 +140,11 @@ final class PoolChunk<T> implements PoolChunkMetric {
     static final int SIZE_SHIFT = INUSED_BIT_LENGTH + IS_USED_SHIFT;
     static final int RUN_OFFSET_SHIFT = SIZE_BIT_LENGTH + SIZE_SHIFT;
 
+    // todo 所属 arena 块
     final PoolArena<T> arena;
+    // todo 内存空间
     final T memory;
+    // todo 是否非池化
     final boolean unpooled;
     final int offset;
 
@@ -157,6 +160,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
 
     /**
      * manage all subpages in this chunk
+     * too PooSubPaeg 数组
      */
     private final PoolSubpage<T>[] subpages;
 
@@ -164,9 +168,9 @@ final class PoolChunk<T> implements PoolChunkMetric {
     private final int pageShifts;
     private final int chunkSize;
 
-    // Use as cache for ByteBuffer created from the memory. These are just duplicates and so are only a container
-    // around the memory itself. These are often needed for operations within the Pooled*ByteBuf and so
-    // may produce extra GC, which can be greatly reduced by caching the duplicates.
+    // Use as cache for ByteBuffer created from the memory.
+    // These are just duplicates and so are only a container around the memory itself.
+    // These are often needed for operations within the Pooled*ByteBuf and so may produce extra GC, which can be greatly reduced by caching the duplicates.
     //
     // This may be null if the PoolChunk is unpooled as pooling the ByteBuffer instances does not make any sense here.
     private final Deque<ByteBuffer> cachedNioBuffers;
